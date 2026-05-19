@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="분할매수">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e14">
+<title>분할매수 플래너</title>
+
+<!-- PWA 아이콘 (SVG 인라인) -->
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="%230a0e14"/><rect x="100" y="120" width="50" height="60" rx="6" fill="%2349BBCA" opacity="0.4"/><rect x="160" y="150" width="50" height="90" rx="6" fill="%2349BBCA" opacity="0.55"/><rect x="220" y="190" width="50" height="130" rx="6" fill="%2349BBCA" opacity="0.7"/><rect x="280" y="240" width="50" height="180" rx="6" fill="%2349BBCA" opacity="0.85"/><rect x="340" y="280" width="50" height="220" rx="6" fill="%2349BBCA"/><line x1="80" y1="280" x2="420" y2="280" stroke="%2349BBCA" stroke-width="3" stroke-dasharray="8 6" opacity="0.6"/></svg>'>
+<link rel="apple-touch-icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="%230a0e14"/><rect x="100" y="120" width="50" height="60" rx="6" fill="%2349BBCA" opacity="0.4"/><rect x="160" y="150" width="50" height="90" rx="6" fill="%2349BBCA" opacity="0.55"/><rect x="220" y="190" width="50" height="130" rx="6" fill="%2349BBCA" opacity="0.7"/><rect x="280" y="240" width="50" height="180" rx="6" fill="%2349BBCA" opacity="0.85"/><rect x="340" y="280" width="50" height="220" rx="6" fill="%2349BBCA"/><line x1="80" y1="280" x2="420" y2="280" stroke="%2349BBCA" stroke-width="3" stroke-dasharray="8 6" opacity="0.6"/></svg>'>
+
+<!-- Web App Manifest (Data URI 인라인) -->
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"분할매수 플래너","short_name":"분할매수","description":"시드 분배와 종목별 분할매수 계획 관리","start_url":".","scope":".","display":"standalone","orientation":"portrait","background_color":"%230a0e14","theme_color":"%230a0e14","icons":[{"src":"data:image/svg%2Bxml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><rect width=%22512%22 height=%22512%22 rx=%2296%22 fill=%22%230a0e14%22/><rect x=%22100%22 y=%22120%22 width=%2250%22 height=%2260%22 rx=%226%22 fill=%22%2349BBCA%22 opacity=%220.4%22/><rect x=%22160%22 y=%22150%22 width=%2250%22 height=%2290%22 rx=%226%22 fill=%22%2349BBCA%22 opacity=%220.55%22/><rect x=%22220%22 y=%22190%22 width=%2250%22 height=%22130%22 rx=%226%22 fill=%22%2349BBCA%22 opacity=%220.7%22/><rect x=%22280%22 y=%22240%22 width=%2250%22 height=%22180%22 rx=%226%22 fill=%22%2349BBCA%22 opacity=%220.85%22/><rect x=%22340%22 y=%22280%22 width=%2250%22 height=%22220%22 rx=%226%22 fill=%22%2349BBCA%22/><line x1=%2280%22 y1=%22280%22 x2=%22420%22 y2=%22280%22 stroke=%22%2349BBCA%22 stroke-width=%223%22 stroke-dasharray=%228 6%22 opacity=%220.6%22/></svg>","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e14;
+  --bg-elev: #131921;
+  --bg-card: #1a212c;
+  --bg-input: #0f1419;
+  --border: #2a3441;
+  --border-strong: #3a4655;
+  --text: #e6edf3;
+  --text-dim: #8b96a5;
+  --text-mute: #5a6573;
+  --accent: #49BBCA;
+  --accent-dim: #2d7a85;
+  --buy: #4ade80;
+  --sell: #f87171;
+  --warn: #fbbf24;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body { padding-bottom: 100px; }
+
+.num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+input, button, select, textarea { font-family: inherit; }
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 14, 20, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px 12px;
+}
+.header h1 {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header h1 .accent { color: var(--accent); }
+.header h1 .dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+}
+.header-sub {
+  font-size: 10.5px;
+  color: var(--text-mute);
+  margin-top: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.3px;
+}
+
+.tabs {
+  display: flex;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 1;
+  min-width: max-content;
+  padding: 14px 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.tab.active { color: var(--accent); }
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.content {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.card-title-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title-bar::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.form-group { margin-bottom: 12px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+  letter-spacing: 0.2px;
+}
+.form-label .unit {
+  color: var(--text-mute);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.form-row { display: flex; gap: 8px; }
+.form-row > .form-group { flex: 1; margin-bottom: 0; }
+
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: border-color 0.15s;
+}
+input[type="text"] { font-family: 'Noto Sans KR', sans-serif; }
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+input::placeholder { color: var(--text-mute); }
+
+#memo-text {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  line-height: 1.7;
+  resize: vertical;
+  min-height: 380px;
+  transition: border-color 0.15s;
+}
+#memo-text:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#memo-text::placeholder {
+  color: var(--text-mute);
+  line-height: 1.7;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b96a5' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 44px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--accent);
+  color: #0a0e14;
+  border-color: var(--accent);
+}
+.btn-primary:active { background: var(--accent-dim); }
+.btn-danger {
+  background: transparent;
+  color: var(--sell);
+  border-color: var(--sell);
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.btn-block { width: 100%; }
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 12px;
+  min-height: 36px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.summary-item { text-align: center; }
+.summary-item .label {
+  font-size: 12.5px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.summary-item .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.summary-item .value.accent { color: var(--accent); }
+.summary-item .value.buy { color: var(--buy); }
+.summary-item .value.sell { color: var(--sell); }
+
+.alloc-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+}
+.alloc-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0a0e14;
+  transition: flex 0.3s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.alloc-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.alloc-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.alloc-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.stock-list { display: flex; flex-direction: column; gap: 10px; }
+.stock-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.stock-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.stock-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.stock-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.badge-dant { background: rgba(73, 187, 202, 0.15); color: var(--accent); }
+.badge-crash { background: rgba(248, 113, 113, 0.15); color: var(--sell); }
+.stock-name {
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stock-meta {
+  text-align: right;
+  flex-shrink: 0;
+}
+.stock-meta-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+}
+.stock-meta-sub {
+  font-size: 10.5px;
+  color: var(--text-mute);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+.stock-body {
+  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  display: none;
+}
+.stock-item.expanded .stock-body { display: block; }
+.chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  transition: transform 0.2s;
+  color: var(--text-mute);
+}
+.stock-item.expanded .chevron { transform: rotate(180deg); }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.table th.right, .table td.right { text-align: center; }
+.table th.center, .table td.center { text-align: center; }
+.table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.table td.label-cell {
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text-dim);
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr.highlight td {
+  background: rgba(73, 187, 202, 0.06);
+  font-weight: 700;
+}
+.table tr.danger td {
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.section-divider {
+  font-size: 11px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+}
+
+.support-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 36px;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.support-row input { padding: 10px 12px; font-size: 14px; }
+.icon-btn {
+  width: 36px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  border-radius: 8px;
+  color: var(--sell);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-mute);
+}
+.empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+.empty-text { font-size: 13px; }
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 14, 20, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 100;
+}
+.bottom-bar .btn { flex: 1; }
+.bottom-bar-inner { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; }
+
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal h2 {
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  color: var(--accent);
+}
+.modal #modal-body {
+  white-space: pre-line;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.modal-actions .btn { flex: 1; }
+
+.helper-text {
+  font-size: 10.5px;
+  color: var(--text-mute);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+.helper-text strong { color: var(--text-dim); }
+
+input:disabled, select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pl-pos { color: var(--buy); }
+.pl-neg { color: var(--sell); }
+
+.chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.chip {
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+}
+.chip:active {
+  background: var(--accent);
+  color: #0a0e14;
+  border-color: var(--accent);
+}
+
+/* Segment toggle */
+.seg-toggle {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 12px;
+  gap: 2px;
+}
+.seg {
+  flex: 1;
+  padding: 9px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.seg.active {
+  background: var(--accent);
+  color: #0a0e14;
+}
+
+/* Subtabs (per-stock tabs) */
+.subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0 10px;
+}
+.subtab {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.subtab.active {
+  background: var(--accent);
+  color: #0a0e14;
+  border-color: var(--accent);
+}
+.subtab .dot-dant, .subtab .dot-crash {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.subtab .dot-dant { background: var(--accent); }
+.subtab .dot-crash { background: var(--sell); }
+.subtab.active .dot-dant, .subtab.active .dot-crash {
+  background: #0a0e14;
+}
+.subtab-add {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.subtab-empty {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-mute);
+  font-style: italic;
+}
+
+/* Manual / support tranche input rows */
+.tranche-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  gap: 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.tranche-row .tranche-no {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+.tranche-row .tranche-unit {
+  font-size: 11px;
+  color: var(--text-mute);
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tranche-row input { padding: 9px 12px; font-size: 14px; }
+
+/* Manual mode 컨테이너: 가로 스크롤 */
+#plan-manual-list {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#plan-manual-list::-webkit-scrollbar { height: 6px; }
+#plan-manual-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+/* Manual mode row: [✓, 매수가, 수량/비중, 금액, 하락폭, 누적평단, 누적수량, 누적투입, 평단대비] */
+.manual-row {
+  display: grid;
+  grid-template-columns: 32px 80px 64px 78px 68px 88px 64px 88px 72px;
+  gap: 2px;
+  margin-bottom: 3px;
+  align-items: center;
+  min-width: 634px;
+}
+.manual-row .tranche-check-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.manual-row .tranche-check {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+.manual-row input {
+  padding: 7px 6px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+}
+.manual-row .calc-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  text-align: center;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.manual-row .calc-cell.dim { color: var(--text-mute); }
+.manual-row .calc-cell.neg { color: var(--sell); }
+.manual-row .calc-cell.pos { color: var(--buy); }
+.manual-row-header {
+  display: grid;
+  grid-template-columns: 32px 80px 64px 78px 68px 88px 64px 88px 72px;
+  gap: 2px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 634px;
+}
+.manual-row-header span {
+  text-align: center;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* 수동 모드일 때 하락간격 그룹 강제 숨김 (방어막) */
+.plan-card.dist-manual #plan-step-group,
+.plan-card.dist-manual #plan-step-helper {
+  display: none !important;
+}
+/* 수동 모드: 플랜 생성 버튼 숨김 (입력 즉시 시뮬레이션됨) */
+.plan-card.dist-manual #btn-gen-plan {
+  display: none !important;
+}
+/* 수동 모드: 매수 시뮬레이션 카드 숨김 (manual-row가 그 역할) */
+.plan-card.dist-manual + #plan-result {
+  display: none !important;
+}
+
+.manual-row.committed-row {
+  background: rgba(74, 222, 128, 0.06);
+  border-radius: 4px;
+  padding: 1px 2px;
+}
+.manual-row.committed-row input[disabled] {
+  color: var(--buy);
+  border-color: rgba(74, 222, 128, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  opacity: 1;
+  -webkit-text-fill-color: var(--buy);
+}
+.manual-row.committed-row .calc-cell {
+  color: var(--buy);
+  font-weight: 700;
+}
+
+/* Plan table 체크박스 */
+.tranche-check {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+.table tr.committed td {
+  background: rgba(74, 222, 128, 0.07);
+  color: var(--buy);
+}
+.table tr.committed .num,
+.table tr.committed td { font-weight: 700; }
+
+@media (min-width: 600px) {
+  .summary { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Track status box (분할계획 카드 안) */
+.track-status-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 11.5px;
+  display: none;  /* JS에서 활성 시 grid */
+}
+.track-status-box.active {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.track-status-item {
+  text-align: center;
+}
+.track-status-item .label {
+  font-size: 10px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+.track-status-item .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.track-status-item .value.used { color: var(--warn); }
+.track-status-item .value.remain { color: var(--buy); }
+
+/* Portfolio status (포트폴리오 탭의 종합 현황) */
+.ps-track {
+  margin-bottom: 18px;
+}
+.ps-track:last-child { margin-bottom: 0; }
+.ps-track-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ps-track-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ps-track-title.dant { color: var(--accent); }
+.ps-track-title.crash { color: var(--sell); }
+.ps-track-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.ps-track-sub strong { color: var(--text); font-weight: 700; }
+.ps-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.ps-bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+.ps-bar-fill.crash { background: var(--sell); }
+.ps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* 종목별 (3행 레이아웃) */
+.ps-stock {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ps-stock:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.ps-stock-symrow {
+  display: flex;
+  align-items: baseline;
+}
+.ps-stock-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ps-stock .sym {
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.ps-meta-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.ps-meta-item .ps-meta-label {
+  color: var(--text-mute);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ps-meta-item.dim { color: var(--text-mute); }
+.ps-meta-item.neg { color: var(--sell); }
+.ps-meta-item.pos { color: var(--buy); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="dot"></span>분할매수 <span class="accent">플래너</span></h1>
+  <div class="header-sub" id="header-sub">SEED · TRANCHE · AVG.PRICE SIMULATION</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="portfolio">포트폴리오</button>
+  <button class="tab" data-tab="plan">분할계획</button>
+  <button class="tab" data-tab="memo">메모</button>
+</div>
+
+<div class="content">
+
+  <div class="panel active" id="panel-portfolio">
+
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar">시드 구성</span></div>
+
+      <div class="form-group">
+        <label class="form-label">전체 시드 <span class="unit">(원)</span></label>
+        <input type="number" id="seed" placeholder="100000000" inputmode="numeric">
+        <div class="chip-row">
+          <span class="chip" data-seed="50000000">5천만</span>
+          <span class="chip" data-seed="100000000">1억</span>
+          <span class="chip" data-seed="200000000">2억</span>
+          <span class="chip" data-seed="500000000">5억</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">예수금 <span class="unit">(%)</span></label>
+          <input type="number" id="ratio-cash" placeholder="30" inputmode="numeric" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">폭락주 <span class="unit">(%)</span></label>
+          <input type="number" id="ratio-crash" placeholder="10" inputmode="numeric" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">단타 <span class="unit">(%)</span></label>
+          <input type="number" id="ratio-dant" placeholder="60" inputmode="numeric" disabled>
+        </div>
+      </div>
+      <div class="helper-text">단타 비중 = 100 − 예수금 − 폭락주 (자동 계산)</div>
+
+      <div class="alloc-bar" id="alloc-bar">
+        <div class="alloc-seg" style="background:#5a6573; flex:30;">30%</div>
+        <div class="alloc-seg" style="background:#f87171; flex:10;">10%</div>
+        <div class="alloc-seg" style="background:#49BBCA; flex:60;">60%</div>
+      </div>
+      <div class="alloc-legend">
+        <div class="alloc-legend-item"><span class="alloc-legend-dot" style="background:#5a6573"></span>예수금</div>
+        <div class="alloc-legend-item"><span class="alloc-legend-dot" style="background:#f87171"></span>폭락주</div>
+        <div class="alloc-legend-item"><span class="alloc-legend-dot" style="background:#49BBCA"></span>단타</div>
+      </div>
+
+      <div class="summary">
+        <div class="summary-item">
+          <div class="label">예수금</div>
+          <div class="value num" id="sum-cash">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">폭락주</div>
+          <div class="value sell num" id="sum-crash">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">단타</div>
+          <div class="value accent num" id="sum-dant">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">합계</div>
+          <div class="value num" id="sum-total">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar">트랙별 투입 현황</span></div>
+      <div id="portfolio-status">
+        <div class="empty"><div class="empty-text">아직 생성된 플랜이 없습니다.<br>분할계획 탭에서 종목을 추가하고 플랜을 생성해 보세요.</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel" id="panel-plan">
+
+    <!-- 종목 서브탭 -->
+    <div class="subtabs" id="subtabs"></div>
+
+    <!-- 분할매수 플랜 -->
+    <div class="card plan-card" id="plan-card">
+      <div class="card-title"><span class="card-title-bar">분할매수 플랜</span></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">종목명 / 티커</label>
+          <input type="text" id="plan-symbol" placeholder="ASTS">
+        </div>
+        <div class="form-group">
+          <label class="form-label">트랙</label>
+          <select id="plan-track">
+            <option value="dant">단타</option>
+            <option value="crash">폭락주</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">현재가 <span class="unit">(원)</span></label>
+          <input type="number" id="plan-price" placeholder="50000" inputmode="decimal" step="any">
+        </div>
+        <div class="form-group">
+          <label class="form-label">종목 한도 <span class="unit">(원)</span></label>
+          <input type="number" id="plan-budget" placeholder="예: 10000000" inputmode="numeric">
+        </div>
+      </div>
+
+      <!-- 트랙 투입 현황 (한도/투입/잔여) -->
+      <div id="track-status" class="track-status-box"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tranche 수</label>
+          <input type="number" id="plan-tranches" value="5" inputmode="numeric" min="2" max="10">
+        </div>
+        <div class="form-group" id="plan-step-group">
+          <label class="form-label">하락 간격 <span class="unit">(%)</span></label>
+          <input type="number" id="plan-step" value="10" inputmode="decimal" step="any">
+        </div>
+      </div>
+      <div class="helper-text" id="plan-step-helper">
+        진입 지점: 0%, -10%, -20%, -30%, -40%
+      </div>
+
+      <!-- 분배 방식 -->
+      <div class="form-group">
+        <label class="form-label">분배 방식</label>
+        <select id="plan-dist">
+          <option value="equal">균등</option>
+          <option value="pyramid">피라미드 (단타 추천)</option>
+          <option value="mild">완만</option>
+          <option value="manual">수동 (가격 직접 입력)</option>
+        </select>
+        <div class="helper-text" id="plan-dist-helper">균등: 20 : 20 : 20 : 20 : 20</div>
+      </div>
+
+      <!-- 수동 입력 (자유 매수가/수량 또는 비중 입력) -->
+      <div id="plan-manual-group" style="display:none;">
+        <div class="seg-toggle" id="plan-manual-toggle" style="margin-bottom:8px;">
+          <button class="seg active" data-mode="qty">수량 입력</button>
+          <button class="seg" data-mode="weight">비중 입력</button>
+        </div>
+        <div id="plan-manual-list"></div>
+        <div class="helper-text" id="plan-manual-helper"></div>
+      </div>
+
+      <div class="form-row" style="margin-top:10px;">
+        <button class="btn btn-primary" id="btn-gen-plan" style="flex:2;">플랜 생성</button>
+        <button class="btn btn-ghost" id="btn-reset-stock" style="flex:1;">종목 초기화</button>
+        <button class="btn btn-danger" id="btn-del-stock" style="flex:1;">종목 삭제</button>
+      </div>
+    </div>
+
+    <div class="card" id="plan-result" style="display:none;">
+      <div class="card-title"><span class="card-title-bar">매수 시뮬레이션</span></div>
+      <div style="overflow-x:auto;">
+        <table class="table" id="plan-table">
+          <thead>
+            <tr>
+              <th class="center">✓</th>
+              <th class="center">#</th>
+              <th class="right">매수가</th>
+              <th class="right">하락폭</th>
+              <th class="right">금액</th>
+              <th class="right">수량</th>
+              <th class="right">누적평단</th>
+              <th class="right">누적수량</th>
+              <th class="right">누적투입</th>
+              <th class="right">평단대비</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="helper-text" style="margin-top:10px;" id="plan-summary"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-memo">
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar">관심 종목 메모</span></div>
+      <div class="helper-text" style="margin-bottom:8px;">눈여겨 볼 티커, 매매 아이디어, 관찰 기록 등 자유롭게 적어두세요. 입력 즉시 자동 저장됩니다.</div>
+      <textarea id="memo-text" rows="20"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-bar-inner">
+    <button class="btn btn-ghost" id="btn-export">내보내기</button>
+    <button class="btn btn-ghost" id="btn-import">가져오기</button>
+    <button class="btn btn-danger" id="btn-reset">초기화</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">저장됨</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">제목</h2>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">취소</button>
+      <button class="btn btn-primary" id="modal-ok">확인</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="application/json" style="display:none;">
+
+<script>
+'use strict';
+
+const BUILD = '2026.05.16';
+document.getElementById('header-sub').textContent = `BUILD ${BUILD} · SEED → SUBTABS → PLAN`;
+
+/* ============================
+ * STATE
+ * ============================ */
+const DEFAULT_PLAN = {
+  symbol: '',
+  track: 'dant',
+  price: 0,
+  budget: null,        // 사용자가 직접 입력
+  tranches: 5,
+  step: 10,
+  dist: 'equal',
+  manualWeights: [],   // 구버전 호환 (미사용)
+  manualMode: 'qty',
+  manualRows: [],
+  // 마지막 결과 (현황 표시용)
+  totalAmt: 0,
+  totalQty: 0,
+  finalAvg: 0,
+  // 진행 추적
+  committed: [],
+  // 마지막 플랜 테이블 (종목 전환 시 복원용)
+  lastTranchePlan: [],     // [{price, qty}]
+  lastBasePrice: 0,
+};
+
+const DEFAULT_STATE = {
+  seed: 100000000,
+  ratioCash: 30,
+  ratioCrash: 10,
+  plans: [],
+  activePlanId: null,
+  memo: '',
+};
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('stockplan_v1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // 구버전 호환: stocks 배열이 있으면 plans로 마이그레이션
+      if (parsed.stocks && !parsed.plans) {
+        const oldDantCount = +parsed.dantCount || 6;
+        const dantPct = 100 - (+parsed.ratioCash || 30) - (+parsed.ratioCrash || 10);
+        const dantAmt = (+parsed.seed || 0) * dantPct / 100;
+        const autoDantBudget = oldDantCount > 0 ? dantAmt / oldDantCount : 0;
+        parsed.plans = parsed.stocks.map(s => ({
+          ...JSON.parse(JSON.stringify(DEFAULT_PLAN)),
+          id: s.id || uid(),
+          symbol: s.symbol || '',
+          track: s.track || 'dant',
+          price: s.price || 0,
+          // 구버전 한도가 null이면 자동 계산값으로 채워줌
+          budget: s.budget || (s.track === 'crash' ? null : autoDantBudget),
+        }));
+        delete parsed.stocks;
+        parsed.activePlanId = parsed.plans[0]?.id || null;
+      }
+      // 구버전의 dantCount 키 정리
+      delete parsed.dantCount;
+      // 구버전 plans에 budget이 null인 경우 0으로 보정 (사용자가 다시 입력해야 함)
+      if (parsed.plans) {
+        parsed.plans.forEach(p => {
+          if (p.budget === null || p.budget === undefined) p.budget = 0;
+          // 마지막 결과 필드 초기화 (없으면)
+          if (typeof p.totalAmt !== 'number') p.totalAmt = 0;
+          if (typeof p.totalQty !== 'number') p.totalQty = 0;
+          if (typeof p.finalAvg !== 'number') p.finalAvg = 0;
+          if (!Array.isArray(p.committed)) p.committed = [];
+          if (!Array.isArray(p.lastTranchePlan)) p.lastTranchePlan = [];
+          if (typeof p.lastBasePrice !== 'number') p.lastBasePrice = 0;
+        });
+      }
+      return Object.assign({}, DEFAULT_STATE, parsed);
+    }
+  } catch(e) { console.warn('load err', e); }
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function saveState() {
+  try { localStorage.setItem('stockplan_v1', JSON.stringify(state)); }
+  catch(e) { console.warn('save err', e); }
+}
+
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+function getActivePlan() {
+  return state.plans.find(p => p.id === state.activePlanId);
+}
+
+/* ============================
+ * FORMAT
+ * ============================ */
+const fmtKRW = (n) => {
+  if (!isFinite(n)) return '0';
+  const abs = Math.abs(n);
+  if (abs >= 100000000) return (n/100000000).toFixed(2).replace(/\.?0+$/,'') + '억';
+  if (abs >= 10000) return (n/10000).toFixed(1).replace(/\.?0+$/,'') + '만';
+  return Math.round(n).toLocaleString();
+};
+const fmtPrice = (n) => {
+  if (!isFinite(n)) return '0';
+  if (n >= 1000) return Math.round(n).toLocaleString();
+  return n.toFixed(2);
+};
+
+function escapeHTML(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ============================
+ * TABS (main)
+ * ============================ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    window.scrollTo(0, 0);
+  });
+});
+
+/* ============================
+ * PORTFOLIO
+ * ============================ */
+const seedEl = document.getElementById('seed');
+const ratioCashEl = document.getElementById('ratio-cash');
+const ratioCrashEl = document.getElementById('ratio-crash');
+const ratioDantEl = document.getElementById('ratio-dant');
+
+function renderPortfolio() {
+  seedEl.value = state.seed || '';
+  ratioCashEl.value = state.ratioCash;
+  ratioCrashEl.value = state.ratioCrash;
+  const dant = Math.max(0, 100 - (state.ratioCash || 0) - (state.ratioCrash || 0));
+  ratioDantEl.value = dant;
+
+  const seed = +state.seed || 0;
+  const cash = seed * (state.ratioCash || 0) / 100;
+  const crash = seed * (state.ratioCrash || 0) / 100;
+  const dantAmt = seed * dant / 100;
+
+  document.getElementById('sum-cash').textContent = fmtKRW(cash);
+  document.getElementById('sum-crash').textContent = fmtKRW(crash);
+  document.getElementById('sum-dant').textContent = fmtKRW(dantAmt);
+  document.getElementById('sum-total').textContent = fmtKRW(seed);
+
+  const bar = document.getElementById('alloc-bar');
+  const segs = bar.querySelectorAll('.alloc-seg');
+  segs[0].style.flex = state.ratioCash || 0;
+  segs[0].textContent = (state.ratioCash || 0) + '%';
+  segs[1].style.flex = state.ratioCrash || 0;
+  segs[1].textContent = (state.ratioCrash || 0) + '%';
+  segs[2].style.flex = dant;
+  segs[2].textContent = dant + '%';
+
+  renderPortfolioStatus();
+}
+
+seedEl.addEventListener('input', () => { state.seed = +seedEl.value || 0; renderPortfolio(); saveState(); });
+ratioCashEl.addEventListener('input', () => {
+  let v = Math.max(0, Math.min(100, +ratioCashEl.value || 0));
+  state.ratioCash = v;
+  if (state.ratioCash + state.ratioCrash > 100) state.ratioCrash = 100 - state.ratioCash;
+  renderPortfolio(); saveState();
+});
+ratioCrashEl.addEventListener('input', () => {
+  let v = Math.max(0, Math.min(100 - state.ratioCash, +ratioCrashEl.value || 0));
+  state.ratioCrash = v;
+  renderPortfolio(); saveState();
+});
+
+document.querySelectorAll('.chip[data-seed]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    state.seed = +chip.dataset.seed;
+    renderPortfolio(); saveState();
+    showToast('시드 설정됨');
+  });
+});
+
+/* ============================
+ * BUDGET CALC
+ * ============================ */
+function dantTotalBudget() {
+  const seed = +state.seed || 0;
+  const dantPct = 100 - state.ratioCash - state.ratioCrash;
+  return seed * dantPct / 100;
+}
+function crashTotalBudget() {
+  return (+state.seed || 0) * state.ratioCrash / 100;
+}
+function getPlanBudget(plan) {
+  return +plan.budget || 0;  // 사용자가 직접 입력
+}
+
+/* ============================
+ * STATUS RENDERERS
+ * ============================ */
+function renderTrackStatus() {
+  const p = getActivePlan();
+  const box = document.getElementById('track-status');
+  if (!p || !p.track) {
+    box.classList.remove('active');
+    return;
+  }
+  const stockBudget = +p.budget || 0;
+  const stockInvested = +p.totalAmt || 0;
+  const stockRemain = stockBudget - stockInvested;
+
+  box.classList.add('active');
+  box.innerHTML = `
+    <div class="track-status-item">
+      <div class="label">종목 한도</div>
+      <div class="value">${fmtKRW(stockBudget)}</div>
+    </div>
+    <div class="track-status-item">
+      <div class="label">투입 중</div>
+      <div class="value used">${fmtKRW(stockInvested)}</div>
+    </div>
+    <div class="track-status-item">
+      <div class="label">종목 잔여</div>
+      <div class="value ${stockRemain >= 0 ? 'remain' : ''}" style="${stockRemain < 0 ? 'color:var(--sell)' : ''}">${fmtKRW(stockRemain)}</div>
+    </div>
+  `;
+}
+
+function renderPortfolioStatus() {
+  const box = document.getElementById('portfolio-status');
+  if (!box) return;
+  if (state.plans.length === 0) {
+    box.innerHTML = `<div class="empty"><div class="empty-text">아직 생성된 플랜이 없습니다.<br>분할계획 탭에서 종목을 추가하고 플랜을 생성해 보세요.</div></div>`;
+    return;
+  }
+
+  const tracks = [
+    { key: 'dant', label: '단타', total: dantTotalBudget() },
+    { key: 'crash', label: '폭락주', total: crashTotalBudget() },
+  ];
+
+  box.innerHTML = tracks.map(t => {
+    const plans = state.plans.filter(p => p.track === t.key);
+    if (plans.length === 0) return '';
+    const totalInvested = plans.reduce((s, p) => s + (+p.totalAmt || 0), 0);
+    const usedPct = t.total > 0 ? totalInvested / t.total * 100 : 0;
+    const fillClass = t.key === 'crash' ? 'crash' : '';
+
+    const list = plans.map(p => {
+      const invested = +p.totalAmt || 0;
+      const budget = +p.budget || 0;
+      const remain = budget - invested;
+      const sym = p.symbol || '(이름 없음)';
+      const pctOfTrack = t.total > 0 ? (invested / t.total * 100).toFixed(1) : '0.0';
+      const price = +p.price || 0;
+      const avg = +p.finalAvg || 0;
+
+      // 평단 대비 현재가 등락률 (양수=손실, 음수=수익)
+      let vsStr = '—', vsClass = 'dim';
+      if (avg > 0 && price > 0) {
+        const vs = (1 - price/avg) * 100;
+        if (Math.abs(vs) < 0.05) { vsStr = '-'; vsClass = 'dim'; }
+        else {
+          vsStr = (vs >= 0 ? '+' : '-') + Math.abs(vs).toFixed(1) + '%';
+          vsClass = vs >= 0 ? 'neg' : 'pos';  // 손실=빨강, 수익=초록
+        }
+      }
+
+      return `<div class="ps-stock">
+        <div class="ps-stock-symrow">
+          <span class="sym">${escapeHTML(sym)}</span>
+        </div>
+        <div class="ps-stock-row">
+          <span class="ps-meta-item"><span class="ps-meta-label">현재가</span>${price > 0 ? fmtPrice(price) : '—'}</span>
+          <span class="ps-meta-item"><span class="ps-meta-label">평단</span>${avg > 0 ? fmtPrice(avg) : '—'}</span>
+          <span class="ps-meta-item ${vsClass}"><span class="ps-meta-label">평단대비</span>${vsStr}</span>
+        </div>
+        <div class="ps-stock-row">
+          <span class="ps-meta-item"><span class="ps-meta-label">투입</span>${fmtKRW(invested)}</span>
+          <span class="ps-meta-item ${remain < 0 ? 'neg' : ''}"><span class="ps-meta-label">잔여</span>${fmtKRW(remain)}</span>
+          <span class="ps-meta-item"><span class="ps-meta-label">한도</span>${fmtKRW(budget)}</span>
+          <span class="ps-meta-item dim"><span class="ps-meta-label">트랙비중</span>${pctOfTrack}%</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="ps-track">
+        <div class="ps-track-header">
+          <span class="ps-track-title ${t.key}">${t.label}</span>
+          <span class="ps-track-sub">투입 <strong>${fmtKRW(totalInvested)}</strong> / 총 <strong>${fmtKRW(t.total)}</strong> (${usedPct.toFixed(1)}%)</span>
+        </div>
+        <div class="ps-bar"><div class="ps-bar-fill ${fillClass}" style="width:${Math.min(100, usedPct)}%"></div></div>
+        <div class="ps-list">${list}</div>
+      </div>
+    `;
+  }).filter(Boolean).join('') || `<div class="empty"><div class="empty-text">플랜을 생성한 종목이 없습니다.</div></div>`;
+}
+
+/* ============================
+ * SUBTABS
+ * ============================ */
+const subtabsEl = document.getElementById('subtabs');
+
+function renderSubtabs() {
+  let html = state.plans.map(p => {
+    const label = p.symbol || '(이름 없음)';
+    const dotClass = p.track === 'dant' ? 'dot-dant' : 'dot-crash';
+    const active = p.id === state.activePlanId ? 'active' : '';
+    return `<button class="subtab ${active}" data-pid="${p.id}"><span class="${dotClass}"></span>${escapeHTML(label)}</button>`;
+  }).join('');
+  if (state.plans.length === 0) {
+    html = `<span class="subtab-empty">+ 버튼을 눌러 종목 추가</span>`;
+  }
+  html += `<button class="subtab-add" id="btn-add-plan">+ 종목</button>`;
+  subtabsEl.innerHTML = html;
+
+  subtabsEl.querySelectorAll('.subtab').forEach(el => {
+    el.addEventListener('click', () => {
+      state.activePlanId = el.dataset.pid;
+      saveState();
+      renderSubtabs();
+      renderPlanForm();
+      restoreOrHidePlanResult();
+    });
+  });
+  document.getElementById('btn-add-plan').addEventListener('click', addNewPlan);
+}
+
+function addNewPlan() {
+  const newPlan = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_PLAN)), { id: uid() });
+  state.plans.push(newPlan);
+  state.activePlanId = newPlan.id;
+  saveState();
+  renderSubtabs();
+  renderPlanForm();
+  renderPortfolioStatus();
+  hidePlanResult();
+  // 종목명 입력에 포커스
+  setTimeout(() => document.getElementById('plan-symbol').focus(), 50);
+}
+
+// 저장된 플랜 테이블 복원 (없으면 숨김)
+function restoreOrHidePlanResult() {
+  const p = getActivePlan();
+  if (!p || !Array.isArray(p.lastTranchePlan) || p.lastTranchePlan.length === 0 || !p.lastBasePrice) {
+    hidePlanResult();
+    return;
+  }
+  const budget = getPlanBudget(p);
+  renderPlanTable(p, p.lastTranchePlan, p.lastBasePrice, budget);
+  document.getElementById('plan-result').style.display = 'block';
+}
+
+/* ============================
+ * PLAN FORM
+ * ============================ */
+const planSymbolEl = document.getElementById('plan-symbol');
+const planTrackEl = document.getElementById('plan-track');
+const planPriceEl = document.getElementById('plan-price');
+const planBudgetEl = document.getElementById('plan-budget');
+const planTranchesEl = document.getElementById('plan-tranches');
+const planStepEl = document.getElementById('plan-step');
+const planDistEl = document.getElementById('plan-dist');
+
+function renderPlanForm() {
+  const p = getActivePlan();
+  if (!p) {
+    // 활성 플랜이 없으면 form 비활성화
+    [planSymbolEl, planTrackEl, planPriceEl, planBudgetEl, planTranchesEl, planStepEl, planDistEl].forEach(el => el.disabled = true);
+    document.getElementById('btn-gen-plan').disabled = true;
+    document.getElementById('btn-del-stock').disabled = true;
+    document.getElementById('btn-reset-stock').disabled = true;
+    planSymbolEl.value = '';
+    planPriceEl.value = '';
+    planBudgetEl.value = '';
+    document.getElementById('track-status').classList.remove('active');
+    return;
+  }
+  [planSymbolEl, planTrackEl, planPriceEl, planBudgetEl, planTranchesEl, planStepEl, planDistEl].forEach(el => el.disabled = false);
+  document.getElementById('btn-gen-plan').disabled = false;
+  document.getElementById('btn-del-stock').disabled = false;
+  document.getElementById('btn-reset-stock').disabled = false;
+
+  planSymbolEl.value = p.symbol || '';
+  planTrackEl.value = p.track;
+  planPriceEl.value = p.price || '';
+  planBudgetEl.value = p.budget || '';
+  planTranchesEl.value = p.tranches;
+  planStepEl.value = p.step;
+  planDistEl.value = p.dist;
+
+  refreshPlanInputs();
+  renderTrackStatus();
+}
+
+function bindPlanInput(el, key, parser) {
+  el.addEventListener('input', () => {
+    const p = getActivePlan();
+    if (!p) return;
+    p[key] = parser ? parser(el.value) : el.value;
+    saveState();
+    // 종목명/트랙 변경 시 서브탭 + 현황 갱신
+    if (key === 'symbol' || key === 'track') {
+      renderSubtabs();
+      renderTrackStatus();
+      renderPortfolioStatus();
+    }
+    // 한도 변경 시 현황 갱신
+    if (key === 'budget') {
+      renderTrackStatus();
+      renderPortfolioStatus();
+    }
+  });
+}
+bindPlanInput(planSymbolEl, 'symbol');
+bindPlanInput(planTrackEl, 'track');
+bindPlanInput(planPriceEl, 'price', v => +v || 0);
+bindPlanInput(planBudgetEl, 'budget', v => v ? +v : null);
+bindPlanInput(planTranchesEl, 'tranches', v => Math.max(2, +v || 2));
+bindPlanInput(planStepEl, 'step', v => +v || 0);
+bindPlanInput(planDistEl, 'dist');
+
+// 추가 이벤트: tranche/step/dist 변경 시 plan 입력 영역 갱신
+[planTranchesEl, planStepEl, planDistEl, planPriceEl, planTrackEl].forEach(el => {
+  el.addEventListener('input', refreshPlanInputs);
+  el.addEventListener('change', refreshPlanInputs);
+});
+
+// 수동 모드 토글 (수량 / 비중)
+document.querySelectorAll('#plan-manual-toggle .seg').forEach(seg => {
+  seg.addEventListener('click', () => {
+    const p = getActivePlan();
+    if (!p) return;
+    document.querySelectorAll('#plan-manual-toggle .seg').forEach(s => s.classList.remove('active'));
+    seg.classList.add('active');
+    p.manualMode = seg.dataset.mode;
+    saveState();
+    refreshPlanInputs();
+  });
+});
+
+/* ============================
+ * DISTRIBUTION
+ * ============================ */
+function getDistribution(tranches, mode, manualWeights) {
+  let raw = [];
+  if (mode === 'equal') {
+    raw = new Array(tranches).fill(1);
+  } else if (mode === 'pyramid') {
+    for (let i = 0; i < tranches; i++) {
+      if (i < 2) raw.push(1);
+      else raw.push(Math.pow(2, i-1));
+    }
+  } else if (mode === 'mild') {
+    for (let i = 0; i < tranches; i++) raw.push(i+1);
+  } else if (mode === 'manual') {
+    for (let i = 0; i < tranches; i++) raw.push(+manualWeights[i] || 0);
+    if (raw.reduce((a,b)=>a+b, 0) === 0) raw = new Array(tranches).fill(1);
+  }
+  const sum = raw.reduce((a,b)=>a+b, 0);
+  return raw.map(v => v / sum);
+}
+
+/* ============================
+ * REFRESH PLAN INPUTS (helper texts, manual rows, support rows)
+ * ============================ */
+// 수동 모드 행의 계산값만 갱신 (innerHTML 재생성 없음 → 포커스 보존)
+function updateManualRowAmounts(p) {
+  if (p.dist !== 'manual') return;
+  const budget = getPlanBudget(p);
+  const isQty = p.manualMode === 'qty';
+  const ml = document.getElementById('plan-manual-list');
+  if (!ml) return;
+
+  // 1차 가격을 basePrice로 사용 (현재가와 무관)
+  const basePrice = +(p.manualRows[0] && p.manualRows[0].price) || 0;
+
+  // 모든 행 누적 + 셀 갱신
+  let cumQty = 0, cumAmt = 0;
+  ml.querySelectorAll('.manual-row').forEach(row => {
+    const idx = +row.dataset.idx;
+    const r = p.manualRows[idx] || {};
+    const pp = +r.price || 0;
+    let q;
+    if (isQty) q = +r.qty || 0;
+    else {
+      const targetAmt = budget * (+r.weight || 0) / 100;
+      q = pp > 0 ? Math.floor(targetAmt / pp) : 0;
+    }
+    const amt = pp * q;
+    cumQty += q;
+    cumAmt += amt;
+    const cumAvg = cumQty > 0 ? cumAmt / cumQty : 0;
+
+    // 하락폭: basePrice 대비
+    const drop = basePrice > 0 && pp > 0 ? (1 - pp/basePrice) * 100 : 0;
+    const hasDrop = basePrice > 0 && pp > 0 && Math.abs(drop) >= 0.05;
+    const dropStr = !(basePrice > 0 && pp > 0) ? '—'
+      : (Math.abs(drop) < 0.05 ? '-' : (drop >= 0 ? '-' : '+') + Math.abs(drop).toFixed(1) + '%');
+
+    // 평단대비
+    let vsAvgStr = '—', vsAvgClass = 'dim';
+    if (cumAvg > 0 && pp > 0) {
+      const vs = (1 - pp/cumAvg) * 100;
+      if (Math.abs(vs) < 0.05) { vsAvgStr = '-'; vsAvgClass = 'dim'; }
+      else { vsAvgStr = (vs >= 0 ? '-' : '+') + Math.abs(vs).toFixed(1) + '%'; vsAvgClass = vs >= 0 ? 'neg' : 'pos'; }
+    }
+
+    const cells = row.querySelectorAll('.calc-cell');
+    // [0]=금액, [1]=하락폭, [2]=누적평단, [3]=누적수량, [4]=누적투입, [5]=평단대비
+    if (cells[0]) cells[0].textContent = amt > 0 ? fmtKRW(amt) : '—';
+    if (cells[1]) {
+      cells[1].textContent = dropStr;
+      cells[1].classList.remove('neg','pos','dim');
+      cells[1].classList.add(hasDrop ? (drop >= 0 ? 'neg' : 'pos') : 'dim');
+    }
+    if (cells[2]) cells[2].textContent = cumAvg > 0 ? fmtPrice(cumAvg) : '—';
+    if (cells[3]) cells[3].textContent = cumQty > 0 ? cumQty : '—';
+    if (cells[4]) cells[4].textContent = cumAmt > 0 ? fmtKRW(cumAmt) : '—';
+    if (cells[5]) {
+      cells[5].textContent = vsAvgStr;
+      cells[5].classList.remove('neg','pos','dim');
+      cells[5].classList.add(vsAvgClass);
+    }
+  });
+
+  const totalQty = cumQty, totalAmt = cumAmt;
+  const avg = totalQty > 0 ? totalAmt / totalQty : 0;
+  const usedPct = budget > 0 ? totalAmt / budget * 100 : 0;
+  const helperEl = document.getElementById('plan-manual-helper');
+  if (helperEl) {
+    helperEl.innerHTML = `총 ${totalQty}주 · 투입 <strong>${fmtKRW(totalAmt)}</strong> (한도 ${usedPct.toFixed(1)}%) · 평단 <strong>${fmtPrice(avg)}</strong>`;
+  }
+
+  // 분배 helper도 갱신 (수동 모드 행별 실제 비중)
+  const tranches = p.tranches;
+  const pctArr = [];
+  for (let i = 0; i < tranches; i++) {
+    const r = p.manualRows[i] || {};
+    const pp = +r.price || 0;
+    let q;
+    if (isQty) q = +r.qty || 0;
+    else {
+      const targetAmt = budget * (+r.weight || 0) / 100;
+      q = pp > 0 ? Math.floor(targetAmt / pp) : 0;
+    }
+    const amt = pp * q;
+    pctArr.push(budget > 0 ? amt / budget * 100 : 0);
+  }
+  const pctStr = pctArr.map(v => v.toFixed(1)).join(' : ');
+  const distHelper = document.getElementById('plan-dist-helper');
+  if (distHelper) distHelper.innerHTML = `<strong>${pctStr}</strong> (%)`;
+
+  // 수동 모드 자동 시뮬레이션: 1차 가격이 있으면 즉시 플랜 테이블 갱신
+  buildManualSimulation(p);
+}
+
+// 수동 모드 자동 시뮬레이션: 입력 즉시 플랜 테이블 갱신
+function buildManualSimulation(p) {
+  if (p.dist !== 'manual') return;
+  const tranches = p.tranches;
+  // committed 배열 동기화
+  while (p.committed.length < tranches) p.committed.push({ committed: false, price: 0, qty: 0 });
+  p.committed = p.committed.slice(0, tranches);
+
+  const isQty = p.manualMode === 'qty';
+  const budget = getPlanBudget(p);
+
+  // 1차 가격을 basePrice로 사용 (현재가와 무관)
+  const basePrice = +(p.manualRows[0] && p.manualRows[0].price) || 0;
+  if (basePrice <= 0) {
+    // 1차 가격 없으면 시뮬레이션 안 함 (테이블 숨김은 X, 그냥 갱신만 보류)
+    return;
+  }
+
+  // tranchePlan 구성
+  const tranchePlan = [];
+  for (let i = 0; i < tranches; i++) {
+    if (p.committed[i] && p.committed[i].committed) {
+      tranchePlan.push({ price: p.committed[i].price, qty: p.committed[i].qty });
+      continue;
+    }
+    const r = p.manualRows[i] || {};
+    const pr = +r.price || 0;
+    let q;
+    if (isQty) q = Math.floor(+r.qty || 0);
+    else {
+      const targetAmt = budget * (+r.weight || 0) / 100;
+      q = pr > 0 ? Math.floor(targetAmt / pr) : 0;
+    }
+    tranchePlan.push({ price: pr, qty: q });
+  }
+
+  // 저장 + 렌더링
+  p.lastTranchePlan = tranchePlan.map(t => ({ price: t.price, qty: t.qty }));
+  p.lastBasePrice = basePrice;
+  saveState();
+  renderPlanTable(p, tranchePlan, basePrice, budget);
+  document.getElementById('plan-result').style.display = 'block';
+}
+
+function refreshPlanInputs() {
+  const p = getActivePlan();
+  if (!p) return;
+  const tranches = p.tranches;
+  const mode = p.dist;
+
+  // plan-card에 dist-manual 클래스 토글 (CSS 강제 숨김 트리거)
+  document.getElementById('plan-card').classList.toggle('dist-manual', mode === 'manual');
+
+  // 분배 helper
+  let pctForHelper;
+  let helperFractionDigits;
+  if (mode === 'manual') {
+    // 수동 모드: 실제 manualRows에서 비중 계산
+    const budget = getPlanBudget(p);
+    pctForHelper = (p.manualRows || []).slice(0, tranches).map(r => {
+      if (!r) return 0;
+      let amt = 0;
+      if (p.manualMode === 'qty') {
+        amt = (+r.price || 0) * (+r.qty || 0);
+      } else {
+        const targetAmt = budget * (+r.weight || 0) / 100;
+        const qty = Math.floor(targetAmt / (+r.price || 1));
+        amt = qty * (+r.price || 0);
+      }
+      return budget > 0 ? amt / budget * 100 : 0;
+    });
+    while (pctForHelper.length < tranches) pctForHelper.push(0);
+    helperFractionDigits = 1;  // 수동: 소수점 1자리
+  } else {
+    const weights = getDistribution(tranches, mode, p.manualWeights);
+    pctForHelper = weights.map(w => w * 100);
+    helperFractionDigits = 0;  // 자동: 정수
+  }
+  const pctStr = pctForHelper.map(v => v.toFixed(helperFractionDigits)).join(' : ');
+  document.getElementById('plan-dist-helper').innerHTML =
+    `<strong>${pctStr}</strong> (%)`;
+
+  // manual input
+  const manualGroup = document.getElementById('plan-manual-group');
+  if (mode === 'manual') {
+    manualGroup.style.display = 'block';
+
+    // 수동 모드 토글 active 동기화
+    document.querySelectorAll('#plan-manual-toggle .seg').forEach(s => {
+      s.classList.toggle('active', s.dataset.mode === p.manualMode);
+    });
+
+    // manualRows 길이를 tranches에 맞춤
+    while (p.manualRows.length < tranches) p.manualRows.push({ price: 0, qty: 0, weight: 0 });
+    p.manualRows = p.manualRows.slice(0, tranches);
+
+    const budget = getPlanBudget(p);
+    const ml = document.getElementById('plan-manual-list');
+    const isQty = p.manualMode === 'qty';
+    const colLabel = isQty ? '수량' : '비중%';
+
+    // 1차 가격을 basePrice로 사용
+    const basePrice = +(p.manualRows[0] && p.manualRows[0].price) || 0;
+
+    // 누적 계산: 매수 완료(committed)된 행들만 누적
+    // 단, 표시는 각 행까지의 "계획상 누적" (committed 무관)
+    let cumQty = 0, cumAmt = 0;
+
+    let html = `<div class="manual-row-header">
+      <span>✓</span><span>매수가</span><span>${colLabel}</span><span>금액</span><span>하락폭</span><span>누적평단</span><span>누적수량</span><span>누적투입</span><span>평단대비</span>
+    </div>`;
+
+    html += p.manualRows.map((r, i) => {
+      const committed = !!(p.committed[i] && p.committed[i].committed);
+      const price = +r.price || 0;
+      let qty, amt;
+      if (isQty) {
+        qty = +r.qty || 0;
+        amt = price * qty;
+      } else {
+        const targetAmt = budget * (+r.weight || 0) / 100;
+        qty = price > 0 ? Math.floor(targetAmt / price) : 0;
+        amt = price * qty;
+      }
+      const inputVal = isQty ? (r.qty || '') : (r.weight || '');
+      const inputKey = isQty ? 'qty' : 'weight';
+      const disabledAttr = committed ? 'disabled' : '';
+
+      // 누적 갱신
+      cumQty += qty;
+      cumAmt += amt;
+      const cumAvg = cumQty > 0 ? cumAmt / cumQty : 0;
+
+      // 하락폭: basePrice 대비
+      const drop = basePrice > 0 && price > 0 ? (1 - price/basePrice) * 100 : 0;
+      const dropStr = (basePrice > 0 && price > 0)
+        ? (Math.abs(drop) < 0.05 ? '-' : (drop >= 0 ? '-' : '+') + Math.abs(drop).toFixed(1) + '%')
+        : '—';
+      const dropClass = (basePrice > 0 && price > 0 && Math.abs(drop) >= 0.05)
+        ? (drop >= 0 ? 'neg' : 'pos') : 'dim';
+
+      // 평단대비: cumAvg 대비 price 하락폭 (해석 나)
+      let vsAvgStr = '—', vsAvgClass = 'dim';
+      if (cumAvg > 0 && price > 0) {
+        const vs = (1 - price/cumAvg) * 100;
+        if (Math.abs(vs) < 0.05) { vsAvgStr = '-'; vsAvgClass = 'dim'; }
+        else { vsAvgStr = (vs >= 0 ? '-' : '+') + Math.abs(vs).toFixed(1) + '%'; vsAvgClass = vs >= 0 ? 'neg' : 'pos'; }
+      }
+
+      return `
+        <div class="manual-row${committed ? ' committed-row' : ''}" data-idx="${i}">
+          <span class="tranche-check-wrap"><input type="checkbox" class="tranche-check manual-check" data-idx="${i}" ${committed ? 'checked' : ''}></span>
+          <input type="number" value="${r.price || ''}" data-mkey="price" inputmode="decimal" step="any" placeholder="가격" ${disabledAttr}>
+          <input type="number" value="${inputVal}" data-mkey="${inputKey}" inputmode="decimal" step="any" placeholder="${isQty ? '0' : '0'}" ${disabledAttr}>
+          <span class="calc-cell">${amt > 0 ? fmtKRW(amt) : '—'}</span>
+          <span class="calc-cell ${dropClass}">${dropStr}</span>
+          <span class="calc-cell">${cumAvg > 0 ? fmtPrice(cumAvg) : '—'}</span>
+          <span class="calc-cell">${cumQty > 0 ? cumQty : '—'}</span>
+          <span class="calc-cell">${cumAmt > 0 ? fmtKRW(cumAmt) : '—'}</span>
+          <span class="calc-cell ${vsAvgClass}">${vsAvgStr}</span>
+        </div>`;
+    }).join('');
+
+    ml.innerHTML = html;
+
+    // helper: 총 투입 / 평단
+    const totals = p.manualRows.slice(0, tranches).reduce((acc, r) => {
+      const pp = +r.price || 0;
+      let q;
+      if (isQty) q = +r.qty || 0;
+      else {
+        const targetAmt = budget * (+r.weight || 0) / 100;
+        q = pp > 0 ? Math.floor(targetAmt / pp) : 0;
+      }
+      acc.qty += q;
+      acc.amt += pp * q;
+      return acc;
+    }, { qty: 0, amt: 0 });
+    const avg = totals.qty > 0 ? totals.amt / totals.qty : 0;
+    const usedPct = budget > 0 ? totals.amt / budget * 100 : 0;
+    document.getElementById('plan-manual-helper').innerHTML =
+      `총 ${totals.qty}주 · 투입 <strong>${fmtKRW(totals.amt)}</strong> (한도 ${usedPct.toFixed(1)}%) · 평단 <strong>${fmtPrice(avg)}</strong>`;
+
+    ml.querySelectorAll('.manual-row').forEach(row => {
+      const idx = +row.dataset.idx;
+      // 가격/수량/비중 입력
+      row.querySelectorAll('input[data-mkey]').forEach(input => {
+        input.addEventListener('input', e => {
+          const key = e.target.dataset.mkey;
+          p.manualRows[idx][key] = +e.target.value || 0;
+          saveState();
+          // 포커스 손실 방지: innerHTML 재생성 없이 계산 셀만 갱신
+          updateManualRowAmounts(p);
+        });
+      });
+      // 체크박스 (committed 토글)
+      const cb = row.querySelector('.manual-check');
+      if (cb) {
+        cb.addEventListener('change', e => {
+          const checked = e.target.checked;
+          while (p.committed.length <= idx) p.committed.push({ committed: false, price: 0, qty: 0 });
+          p.committed[idx].committed = checked;
+          if (checked) {
+            // 현재 행의 가격/수량 값 저장
+            const r = p.manualRows[idx] || {};
+            const pp = +r.price || 0;
+            const isQ = p.manualMode === 'qty';
+            let q;
+            if (isQ) q = Math.floor(+r.qty || 0);
+            else {
+              const targetAmt = budget * (+r.weight || 0) / 100;
+              q = pp > 0 ? Math.floor(targetAmt / pp) : 0;
+            }
+            p.committed[idx].price = pp;
+            p.committed[idx].qty = q;
+          }
+          saveState();
+          // 전체 재렌더링 (disabled 상태 + committed-row 스타일 반영)
+          refreshPlanInputs();
+        });
+      }
+    });
+  } else {
+    manualGroup.style.display = 'none';
+  }
+
+  // step 그룹: 수동 모드에선 숨김
+  const stepGroup = document.getElementById('plan-step-group');
+  const stepHelper = document.getElementById('plan-step-helper');
+  if (mode === 'manual') {
+    stepGroup.style.display = 'none';
+    stepHelper.style.display = 'none';
+    // 수동 모드: 입력 즉시 시뮬레이션
+    buildManualSimulation(p);
+  } else {
+    stepGroup.style.display = 'block';
+    stepHelper.style.display = 'block';
+    const drops = [];
+    for (let i = 0; i < tranches; i++) drops.push((p.step*i).toFixed(0) + '%');
+    stepHelper.innerHTML =
+      `진입 지점: <strong>${drops.map(d => d === '0%' ? '0%' : '-' + d).join(', ')}</strong>`;
+  }
+}
+
+/* ============================
+ * GENERATE PLAN
+ * ============================ */
+function hidePlanResult() {
+  document.getElementById('plan-result').style.display = 'none';
+}
+
+document.getElementById('btn-gen-plan').addEventListener('click', () => {
+  const p = getActivePlan();
+  if (!p) { showToast('종목을 먼저 추가하세요'); return; }
+  if (!p.symbol) { showToast('종목명을 입력하세요'); return; }
+
+  // 수동 모드: 현재가와 무관, 항상 #1 tranche 가격을 기준가로 사용
+  // 자동 모드: 종목 정보의 현재가가 기준가
+  let basePrice;
+  if (p.dist === 'manual') {
+    basePrice = +(p.manualRows[0] && p.manualRows[0].price) || 0;
+    if (!basePrice || basePrice <= 0) {
+      showToast('1차 매수가를 입력하세요');
+      return;
+    }
+  } else {
+    basePrice = p.price;
+    if (!basePrice || basePrice <= 0) { showToast('현재가를 입력하세요'); return; }
+  }
+
+  const tranches = p.tranches;
+  const budget = getPlanBudget(p);
+
+  // 한도 검증: 자동 모드 또는 비중 입력 모드일 때 필수
+  const needsBudget = p.dist !== 'manual' || (p.dist === 'manual' && p.manualMode === 'weight');
+  if (needsBudget && (!budget || budget <= 0)) {
+    showToast('종목 한도를 입력하세요');
+    return;
+  }
+
+  // committed 배열을 tranches 수에 맞춰 동기화
+  while (p.committed.length < tranches) p.committed.push({ committed: false, price: 0, qty: 0 });
+  p.committed = p.committed.slice(0, tranches);
+
+  // 각 tranche의 (가격, 수량) 결정
+  // committed인 행은 저장된 값 사용, 나머지는 새로 계산
+  const tranchePlan = [];
+
+  if (p.dist === 'manual') {
+    const isQty = p.manualMode === 'qty';
+    for (let i = 0; i < tranches; i++) {
+      if (p.committed[i] && p.committed[i].committed) {
+        tranchePlan.push({ price: p.committed[i].price, qty: p.committed[i].qty });
+        continue;
+      }
+      const r = p.manualRows[i] || {};
+      const pr = +r.price || 0;
+      if (pr <= 0) { showToast(`#${i+1} 매수가를 입력하세요`); return; }
+      let q;
+      if (isQty) {
+        q = Math.floor(+r.qty || 0);
+      } else {
+        const targetAmt = budget * (+r.weight || 0) / 100;
+        q = Math.floor(targetAmt / pr);
+      }
+      if (q <= 0) { showToast(`#${i+1} ${isQty ? '수량' : '비중'}을 입력하세요`); return; }
+      tranchePlan.push({ price: pr, qty: q });
+    }
+  } else {
+    // 자동 모드 (균등/피라미드/완만) - 항상 균등 하락 가격 + 선택된 분배 비중
+    const weights = getDistribution(tranches, p.dist, p.manualWeights);
+    if (p.step * (tranches - 1) >= 100) {
+      showToast(`하락 간격이 너무 큽니다 (최저가가 0 이하)`); return;
+    }
+    const prices = [];
+    for (let i = 0; i < tranches; i++) prices.push(basePrice * (1 - (p.step/100) * i));
+    for (let i = 0; i < tranches; i++) {
+      if (p.committed[i] && p.committed[i].committed) {
+        tranchePlan.push({ price: p.committed[i].price, qty: p.committed[i].qty });
+        continue;
+      }
+      const allocAmt = budget * weights[i];
+      const q = Math.floor(allocAmt / prices[i]);
+      tranchePlan.push({ price: prices[i], qty: q });
+    }
+  }
+
+  // 마지막 플랜 저장 (종목 전환 시 복원용)
+  p.lastTranchePlan = tranchePlan.map(t => ({ price: t.price, qty: t.qty }));
+  p.lastBasePrice = basePrice;
+  saveState();
+
+  // 렌더링
+  renderPlanTable(p, tranchePlan, basePrice, budget);
+  document.getElementById('plan-result').style.display = 'block';
+});
+
+// 분리된 렌더링 함수 (체크박스 변경 시에도 재호출)
+function renderPlanTable(p, tranchePlan, basePrice, budget) {
+  const tbody = document.querySelector('#plan-table tbody');
+  tbody.innerHTML = '';
+  const tranches = tranchePlan.length;
+
+  // 누적 평단/수량은 전체 플랜 기준
+  let totalQty = 0, totalAmt = 0;
+  // 투입 중 (committed만)
+  let committedQty = 0, committedAmt = 0;
+
+  for (let i = 0; i < tranches; i++) {
+    const price = tranchePlan[i].price;
+    const qty = tranchePlan[i].qty;
+    const amt = qty * price;
+    totalQty += qty;
+    totalAmt += amt;
+    const avg = totalQty > 0 ? totalAmt / totalQty : 0;
+    const drop = (1 - price/basePrice) * 100;
+    const isCommitted = !!(p.committed[i] && p.committed[i].committed);
+    if (isCommitted) {
+      committedQty += qty;
+      committedAmt += amt;
+    }
+
+    const tr = document.createElement('tr');
+    if (isCommitted) tr.classList.add('committed');
+    else if (i === 0) tr.classList.add('highlight');
+
+    // 평단대비 (해석 나: 누적 평단 대비 그 행 가격 하락폭)
+    let vsAvgStr = '-', vsAvgClass = '';
+    if (avg > 0 && price > 0) {
+      const vs = (1 - price/avg) * 100;
+      if (Math.abs(vs) < 0.05) { vsAvgStr = '-'; }
+      else {
+        vsAvgStr = (vs >= 0 ? '-' : '+') + Math.abs(vs).toFixed(1) + '%';
+        vsAvgClass = vs >= 0 ? 'pl-neg' : 'pl-pos';
+      }
+    }
+
+    tr.innerHTML = `
+      <td class="center"><input type="checkbox" class="tranche-check" data-idx="${i}" ${isCommitted ? 'checked' : ''}></td>
+      <td class="center">${i+1}</td>
+      <td class="right">${fmtPrice(price)}</td>
+      <td class="right ${Math.abs(drop)>0.01?(drop>0?'pl-neg':'pl-pos'):''}">${Math.abs(drop) > 0.01 ? (drop > 0 ? '-' : '+') + Math.abs(drop).toFixed(1) + '%' : '-'}</td>
+      <td class="right">${fmtKRW(amt)}</td>
+      <td class="right">${qty}</td>
+      <td class="right">${fmtPrice(avg)}</td>
+      <td class="right">${totalQty}</td>
+      <td class="right">${fmtKRW(totalAmt)}</td>
+      <td class="right ${vsAvgClass}">${vsAvgStr}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // 체크박스 이벤트
+  tbody.querySelectorAll('.tranche-check').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const idx = +e.target.dataset.idx;
+      const checked = e.target.checked;
+      while (p.committed.length <= idx) p.committed.push({ committed: false, price: 0, qty: 0 });
+      p.committed[idx].committed = checked;
+      if (checked) {
+        // 현재 행 값 저장
+        p.committed[idx].price = tranchePlan[idx].price;
+        p.committed[idx].qty = tranchePlan[idx].qty;
+      }
+      // 투입 합계 재계산
+      let cQty = 0, cAmt = 0;
+      for (let i = 0; i < tranchePlan.length; i++) {
+        if (p.committed[i] && p.committed[i].committed) {
+          cQty += tranchePlan[i].qty;
+          cAmt += tranchePlan[i].qty * tranchePlan[i].price;
+        }
+      }
+      p.totalAmt = cAmt;
+      p.totalQty = cQty;
+      p.finalAvg = cQty > 0 ? cAmt / cQty : 0;
+      saveState();
+      // 행 스타일 + 합계 표시 갱신
+      renderPlanTable(p, tranchePlan, basePrice, budget);
+      updatePlanSummary(p, tranchePlan, basePrice, budget);
+      renderTrackStatus();
+      renderPortfolioStatus();
+    });
+  });
+
+  // 플랜 객체 갱신 (committed 기반)
+  p.totalAmt = committedAmt;
+  p.totalQty = committedQty;
+  p.finalAvg = committedQty > 0 ? committedAmt / committedQty : 0;
+  saveState();
+  updatePlanSummary(p, tranchePlan, basePrice, budget);
+  renderTrackStatus();
+  renderPortfolioStatus();
+}
+
+function updatePlanSummary(p, tranchePlan, basePrice, budget) {
+  const tranches = tranchePlan.length;
+  // 전체 플랜 기준 (계획)
+  let planQty = 0, planAmt = 0;
+  for (let i = 0; i < tranches; i++) {
+    planQty += tranchePlan[i].qty;
+    planAmt += tranchePlan[i].qty * tranchePlan[i].price;
+  }
+  const planFinalAvg = planQty > 0 ? planAmt / planQty : 0;
+
+  // 매수 완료된 부분 (committed)
+  let cQty = 0, cAmt = 0;
+  for (let i = 0; i < tranches; i++) {
+    if (p.committed[i] && p.committed[i].committed) {
+      cQty += tranchePlan[i].qty;
+      cAmt += tranchePlan[i].qty * tranchePlan[i].price;
+    }
+  }
+  const cAvg = cQty > 0 ? cAmt / cQty : 0;
+
+  const finalPrice = tranchePlan[tranchePlan.length - 1].price;
+  const dropTotal = (1 - finalPrice/basePrice) * 100;
+  const distLabel = {equal:'균등', pyramid:'피라미드', mild:'완만', manual:'수동'}[p.dist];
+  let modeLabel;
+  if (p.dist === 'manual') {
+    modeLabel = p.manualMode === 'qty' ? '수량 입력' : '비중 입력';
+  } else {
+    modeLabel = '균등 하락';
+  }
+
+  const committedCount = p.committed.filter(c => c && c.committed).length;
+  const progressStr = committedCount > 0
+    ? `<br>매수 완료 <strong class="pl-pos">${committedCount}/${tranches}</strong> · 투입 <strong>${fmtKRW(cAmt)}</strong> · 현재 평단 <strong>${fmtPrice(cAvg)}</strong>`
+    : '';
+
+  document.getElementById('plan-summary').innerHTML =
+    `<strong>${escapeHTML(p.symbol)}</strong> · ${modeLabel} · ${distLabel} · ${tranches}회 분할<br>` +
+    `종목 한도 <strong>${fmtKRW(budget)}</strong> · 계획 평단 <strong>${fmtPrice(planFinalAvg)}</strong> · ` +
+    `최저 <strong>${dropTotal >= 0 ? '-' : '+'}${Math.abs(dropTotal).toFixed(1)}%</strong>` +
+    progressStr;
+}
+
+// 종목 초기화: 종목명/트랙/현재가/한도 외 모든 플랜 입력 초기화
+document.getElementById('btn-reset-stock').addEventListener('click', () => {
+  const p = getActivePlan();
+  if (!p) return;
+  confirmModal('종목 초기화', `'${p.symbol || '(이름 없음)'}'의 모든 플랜 설정을 초기화할까요?\n(종목명/트랙/현재가/한도는 유지, 그 외 모든 입력 리셋)`, () => {
+    // 보존할 필드만 복사
+    const keep = {
+      id: p.id,
+      symbol: p.symbol,
+      track: p.track,
+      price: p.price,
+      budget: p.budget,
+    };
+    const idx = state.plans.findIndex(x => x.id === p.id);
+    state.plans[idx] = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_PLAN)), keep);
+    saveState();
+    renderPlanForm();
+    restoreOrHidePlanResult();
+    renderTrackStatus();
+    renderPortfolioStatus();
+    showToast('종목 초기화됨');
+  });
+});
+
+document.getElementById('btn-del-stock').addEventListener('click', () => {
+  const p = getActivePlan();
+  if (!p) return;
+  confirmModal('종목 삭제', `'${p.symbol || '(이름 없음)'}'을(를) 삭제할까요?`, () => {
+    const idx = state.plans.findIndex(x => x.id === p.id);
+    state.plans = state.plans.filter(x => x.id !== p.id);
+    // 다음 활성 종목 결정
+    if (state.plans.length === 0) {
+      state.activePlanId = null;
+    } else {
+      const nextIdx = Math.min(idx, state.plans.length - 1);
+      state.activePlanId = state.plans[nextIdx].id;
+    }
+    saveState();
+    renderSubtabs();
+    renderPlanForm();
+    renderPortfolioStatus();
+    restoreOrHidePlanResult();
+    showToast('삭제됨');
+  });
+});
+
+/* ============================
+ * MODAL
+ * ============================ */
+let modalCallback = null;
+function confirmModal(title, body, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  modalCallback = cb;
+  document.getElementById('modal').classList.add('show');
+}
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('show');
+  modalCallback = null;
+});
+document.getElementById('modal-ok').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('show');
+  if (modalCallback) modalCallback();
+  modalCallback = null;
+});
+
+/* ============================
+ * EXPORT / IMPORT / RESET
+ * ============================ */
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0,16).replace(/[T:]/g, '-');
+  a.href = url; a.download = `stockplan_${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('파일 저장됨');
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      state = Object.assign({}, DEFAULT_STATE, data);
+      saveState();
+      renderPortfolio();
+      renderSubtabs();
+      renderPlanForm();
+      restoreOrHidePlanResult();
+      memoTextEl.value = state.memo || '';
+      showToast('불러옴');
+    } catch(err) { showToast('파일 오류'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  confirmModal('초기화', '모든 데이터가 삭제됩니다. 계속할까요?', () => {
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    saveState();
+    renderPortfolio();
+    renderSubtabs();
+    renderPlanForm();
+    hidePlanResult();
+    memoTextEl.value = '';
+    showToast('초기화됨');
+  });
+});
+
+/* ============================
+ * MEMO
+ * ============================ */
+const memoTextEl = document.getElementById('memo-text');
+memoTextEl.value = state.memo || '';
+memoTextEl.addEventListener('input', () => {
+  state.memo = memoTextEl.value;
+  saveState();
+});
+
+/* ============================
+ * INIT
+ * ============================ */
+renderPortfolio();
+renderSubtabs();
+renderPlanForm();
+restoreOrHidePlanResult();
+
+</script>
+</body>
+</html>
