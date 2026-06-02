@@ -1415,7 +1415,7 @@ input:disabled, select:disabled {
 .fib-row .from-high {
   text-align: right;
   font-weight: 600;
-  font-size: 11px;
+  font-size: 12px;
   padding-right: 8px;
 }
 .fib-row-header {
@@ -1449,12 +1449,7 @@ input:disabled, select:disabled {
 .fib-row.near .distance { color: var(--buy); font-weight: 700; }
 .fib-row.support-1 .level::before { content: '⭐ '; }
 
-/* minor (보조 비율) — 메이저와 동일한 크기/색, 들여쓰기와 MINOR 라벨로만 구분 */
-.fib-row-minor {
-  padding: 6px 8px 6px 20px;       /* 좌측 들여쓰기로 부속 느낌 */
-  border-left: 2px solid var(--border);
-  margin-left: 8px;
-}
+/* minor (보조 비율) — 메이저와 동일한 크기/색/위치, MINOR 라벨로만 구분 */
 .fib-row-minor .level {
   display: flex;
   flex-direction: column;
@@ -2159,7 +2154,6 @@ input:disabled, select:disabled {
   <div class="bottom-bar-inner">
     <button class="btn btn-ghost" id="btn-export">내보내기</button>
     <button class="btn btn-ghost" id="btn-import">가져오기</button>
-    <button class="btn btn-danger" id="btn-reset">초기화</button>
   </div>
 </div>
 
@@ -3382,24 +3376,6 @@ document.getElementById('file-input').addEventListener('change', e => {
   e.target.value = '';
 });
 
-document.getElementById('btn-reset').addEventListener('click', () => {
-  confirmModal('초기화', '모든 데이터가 삭제됩니다. 계속할까요?', () => {
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    saveState();
-    renderPortfolio();
-    renderSubtabs();
-    renderPlanForm();
-    hidePlanResult();
-    memoTextEl.value = '';
-    calcBaseNowEl.value = '';
-    calcLevNowEl.value = '';
-    calcMultiplierEl.value = '3';
-    calcBaseTargetEl.value = '';
-    updateCalc();
-    showToast('초기화됨');
-  });
-});
-
 /* ============================
  * MEMO
  * ============================ */
@@ -4337,11 +4313,11 @@ function renderFibResult() {
   // 표 헤더 (레버 ON일 때 컬럼 추가)
   const tableHeaderHtml = `
     <div class="fib-row fib-row-header${hasLev ? ' has-lev' : ''}">
-      <span class="level" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">레벨</span>
-      <span class="price" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">본주 가격</span>
-      <span class="from-high" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">전고점 대비</span>
-      ${hasLev ? `<span class="lev-price" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">레버 ×${levMult}</span>` : ''}
-      <span class="distance" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">${hasLev ? '등락률 (본주 / 레버)' : '현재가 대비'}</span>
+      <span class="level" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;">레벨</span>
+      <span class="price" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;">본주 가격</span>
+      <span class="from-high" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;">전고점 대비</span>
+      ${hasLev ? `<span class="lev-price" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;">레버 ×${levMult}</span>` : ''}
+      <span class="distance" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;">${hasLev ? '등락률 (본주 / 레버)' : '현재가 대비'}</span>
     </div>
   `;
 
