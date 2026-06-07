@@ -1037,8 +1037,8 @@ input:disabled, select:disabled {
   flex-wrap: wrap;
 }
 .ps-track-title {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -1066,6 +1066,45 @@ input:disabled, select:disabled {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+/* Sub Total - 트랙별 합계 (트랙 카드 내부) */
+.ps-subtotal {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ps-subtotal-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  font-weight: 700;
+}
+.ps-subtotal.dant .ps-subtotal-label { color: var(--accent); }
+.ps-subtotal.crash .ps-subtotal-label { color: var(--sell); }
+
+/* Grand Total - 전체 합계 (트랙들 아래) */
+.ps-grandtotal {
+  margin-top: 14px;
+  padding: 14px;
+  background: rgba(73, 187, 202, 0.06);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ps-grandtotal-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 800;
 }
 /* 종목별 (3행 레이아웃) */
 .ps-stock {
@@ -2610,12 +2649,29 @@ function renderPortfolioStatus() {
     { key: 'crash', label: '레버', total: crashTotalBudget() },
   ];
 
-  box.innerHTML = tracks.map(t => {
+  // 전체 합계 누적용
+  let grandBudget = 0;
+  let grandInvested = 0;
+  let grandRemain = 0;
+  let grandTrackTotal = 0;
+
+  const tracksHtml = tracks.map(t => {
     const plans = state.plans.filter(p => p.track === t.key);
     if (plans.length === 0) return '';
     const totalInvested = plans.reduce((s, p) => s + (+p.totalAmt || 0), 0);
     const usedPct = t.total > 0 ? totalInvested / t.total * 100 : 0;
     const fillClass = t.key === 'crash' ? 'crash' : '';
+
+    // Sub Total 계산
+    const subBudget = plans.reduce((s, p) => s + (+p.budget || 0), 0);
+    const subInvested = totalInvested;
+    const subRemain = subBudget - subInvested;
+
+    // Grand 누적
+    grandBudget += subBudget;
+    grandInvested += subInvested;
+    grandRemain += subRemain;
+    grandTrackTotal += t.total;
 
     const list = plans.map(p => {
       const invested = +p.totalAmt || 0;
@@ -2655,6 +2711,18 @@ function renderPortfolioStatus() {
       </div>`;
     }).join('');
 
+    // Sub Total 행
+    const subTotalHtml = `
+      <div class="ps-subtotal ${t.key}">
+        <div class="ps-subtotal-label">Sub Total · ${t.label}</div>
+        <div class="ps-stock-row">
+          <span class="ps-meta-item"><span class="ps-meta-label">투입합</span>${fmtKRW(subInvested)}</span>
+          <span class="ps-meta-item ${subRemain < 0 ? 'neg' : ''}"><span class="ps-meta-label">잔여합</span>${fmtKRW(subRemain)}</span>
+          <span class="ps-meta-item"><span class="ps-meta-label">한도합</span>${fmtKRW(subBudget)}</span>
+        </div>
+      </div>
+    `;
+
     return `
       <div class="ps-track">
         <div class="ps-track-header">
@@ -2663,9 +2731,25 @@ function renderPortfolioStatus() {
         </div>
         <div class="ps-bar"><div class="ps-bar-fill ${fillClass}" style="width:${Math.min(100, usedPct)}%"></div></div>
         <div class="ps-list">${list}</div>
+        ${subTotalHtml}
       </div>
     `;
-  }).filter(Boolean).join('') || `<div class="empty"><div class="empty-text">플랜을 생성한 종목이 없습니다.</div></div>`;
+  }).filter(Boolean).join('');
+
+  // 전체 Total 행 (트랙이 둘 다 있을 때만 의미 있음)
+  const totalHtml = grandBudget > 0 ? `
+    <div class="ps-grandtotal">
+      <div class="ps-grandtotal-label">Total · 본주 + 레버</div>
+      <div class="ps-stock-row">
+        <span class="ps-meta-item"><span class="ps-meta-label">투입합</span>${fmtKRW(grandInvested)}</span>
+        <span class="ps-meta-item ${grandRemain < 0 ? 'neg' : ''}"><span class="ps-meta-label">잔여합</span>${fmtKRW(grandRemain)}</span>
+        <span class="ps-meta-item"><span class="ps-meta-label">한도합</span>${fmtKRW(grandBudget)}</span>
+        <span class="ps-meta-item dim"><span class="ps-meta-label">트랙총합</span>${fmtKRW(grandTrackTotal)}</span>
+      </div>
+    </div>
+  ` : '';
+
+  box.innerHTML = (tracksHtml + totalHtml) || `<div class="empty"><div class="empty-text">플랜을 생성한 종목이 없습니다.</div></div>`;
 }
 
 /* ============================
