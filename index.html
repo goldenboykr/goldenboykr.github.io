@@ -1674,7 +1674,7 @@ input:disabled, select:disabled {
 
       <div class="form-group">
         <label class="form-label">전체 시드 <span class="unit">(원)</span></label>
-        <input type="number" id="seed" placeholder="100000000" inputmode="numeric">
+        <input type="text" id="seed" class="comma-input" placeholder="100,000,000" inputmode="numeric" autocomplete="off">
         <div class="chip-row">
           <span class="chip" data-seed="50000000">5천만</span>
           <span class="chip" data-seed="100000000">1억</span>
@@ -1765,11 +1765,11 @@ input:disabled, select:disabled {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">현재가 <span class="unit">(원)</span></label>
-          <input type="number" id="plan-price" placeholder="50000" inputmode="decimal" step="any">
+          <input type="text" id="plan-price" class="comma-input" placeholder="50,000" inputmode="decimal" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">종목 한도 <span class="unit">(원)</span></label>
-          <input type="number" id="plan-budget" placeholder="예: 10000000" inputmode="numeric">
+          <input type="text" id="plan-budget" class="comma-input" placeholder="예: 10,000,000" inputmode="numeric" autocomplete="off">
         </div>
       </div>
 
@@ -2396,9 +2396,20 @@ function getActivePlan() {
 const fmtKRW = (n) => {
   if (!isFinite(n)) return '0';
   const abs = Math.abs(n);
-  if (abs >= 100000000) return (n/100000000).toFixed(2).replace(/\.?0+$/,'') + '억';
-  if (abs >= 10000) return (n/10000).toFixed(1).replace(/\.?0+$/,'') + '만';
-  return Math.round(n).toLocaleString();
+  if (abs >= 100000000) {
+    const v = (n/100000000).toFixed(2).replace(/\.?0+$/, '');
+    // 정수부에 콤마 추가
+    const parts = v.split('.');
+    parts[0] = (+parts[0]).toLocaleString('ko-KR');
+    return parts.join('.') + '억';
+  }
+  if (abs >= 10000) {
+    const v = (n/10000).toFixed(1).replace(/\.?0+$/, '');
+    const parts = v.split('.');
+    parts[0] = (+parts[0]).toLocaleString('ko-KR');
+    return parts.join('.') + '만';
+  }
+  return Math.round(n).toLocaleString('ko-KR');
 };
 const fmtPrice = (n) => {
   if (!isFinite(n)) return '0';
@@ -2475,7 +2486,7 @@ const ratioCrashEl = document.getElementById('ratio-crash');
 const ratioDantEl = document.getElementById('ratio-dant');
 
 function renderPortfolio() {
-  seedEl.value = state.seed || '';
+  seedEl.value = state.seed ? Number(state.seed).toLocaleString('ko-KR') : '';
   ratioCashEl.value = state.ratioCash;
   ratioCrashEl.value = state.ratioCrash;
   const dant = Math.max(0, 100 - (state.ratioCash || 0) - (state.ratioCrash || 0));
@@ -2503,7 +2514,23 @@ function renderPortfolio() {
   renderPortfolioStatus();
 }
 
-seedEl.addEventListener('input', () => { state.seed = +seedEl.value || 0; renderPortfolio(); saveState(); });
+seedEl.addEventListener('input', () => {
+  state.seed = parseCommaNum(seedEl.value) || 0;
+  renderPortfolioStatus();  // 분배 카드만 갱신 (input 중에 콤마 다시 찍지 않음)
+  // 분배 바 갱신
+  const seed = state.seed;
+  const cash = seed * (state.ratioCash || 0) / 100;
+  const crash = seed * (state.ratioCrash || 0) / 100;
+  const dant = Math.max(0, 100 - (state.ratioCash || 0) - (state.ratioCrash || 0));
+  const dantAmt = seed * dant / 100;
+  document.getElementById('sum-cash').textContent = fmtKRW(cash);
+  document.getElementById('sum-crash').textContent = fmtKRW(crash);
+  document.getElementById('sum-dant').textContent = fmtKRW(dantAmt);
+  document.getElementById('sum-total').textContent = fmtKRW(seed);
+  saveState();
+});
+seedEl.addEventListener('focus', () => stripCommaForEdit(seedEl));
+seedEl.addEventListener('blur', () => applyCommaFormat(seedEl));
 ratioCashEl.addEventListener('input', () => {
   let v = Math.max(0, Math.min(100, +ratioCashEl.value || 0));
   state.ratioCash = v;
@@ -2730,8 +2757,8 @@ function renderPlanForm() {
 
   planSymbolEl.value = p.symbol || '';
   planTrackEl.value = p.track;
-  planPriceEl.value = p.price || '';
-  planBudgetEl.value = p.budget || '';
+  planPriceEl.value = p.price ? Number(p.price).toLocaleString('ko-KR') : '';
+  planBudgetEl.value = p.budget ? Number(p.budget).toLocaleString('ko-KR') : '';
   planTranchesEl.value = p.tranches;
   planStepEl.value = p.step;
   planDistEl.value = p.dist;
@@ -2761,11 +2788,17 @@ function bindPlanInput(el, key, parser) {
 }
 bindPlanInput(planSymbolEl, 'symbol');
 bindPlanInput(planTrackEl, 'track');
-bindPlanInput(planPriceEl, 'price', v => +v || 0);
-bindPlanInput(planBudgetEl, 'budget', v => v ? +v : null);
+bindPlanInput(planPriceEl, 'price', v => parseCommaNum(v) || 0);
+bindPlanInput(planBudgetEl, 'budget', v => { const n = parseCommaNum(v); return isNaN(n) ? null : n; });
 bindPlanInput(planTranchesEl, 'tranches', v => Math.max(2, +v || 2));
 bindPlanInput(planStepEl, 'step', v => +v || 0);
 bindPlanInput(planDistEl, 'dist');
+
+// 콤마 자동 처리 (price, budget만)
+[planPriceEl, planBudgetEl].forEach(el => {
+  el.addEventListener('focus', () => stripCommaForEdit(el));
+  el.addEventListener('blur', () => applyCommaFormat(el));
+});
 
 // 추가 이벤트: tranche/step/dist 변경 시 plan 입력 영역 갱신
 [planTranchesEl, planStepEl, planDistEl, planPriceEl, planTrackEl].forEach(el => {
@@ -3059,8 +3092,8 @@ function refreshPlanInputs() {
       return `
         <div class="manual-row${committed ? ' committed-row' : ''}" data-idx="${i}">
           <span class="tranche-check-wrap"><input type="checkbox" class="tranche-check manual-check" data-idx="${i}" ${committed ? 'checked' : ''}></span>
-          <input type="number" value="${r.price || ''}" data-mkey="price" inputmode="decimal" step="any" placeholder="가격" ${disabledAttr}>
-          <input type="number" value="${inputVal}" data-mkey="${inputKey}" inputmode="decimal" step="any" placeholder="${isQty ? '0' : '0'}" ${disabledAttr}>
+          <input type="text" class="comma-input" value="${r.price ? Number(r.price).toLocaleString('ko-KR') : ''}" data-mkey="price" inputmode="decimal" placeholder="가격" autocomplete="off" ${disabledAttr}>
+          <input type="text" class="${isQty ? 'comma-input' : ''}" value="${isQty ? (inputVal ? Number(inputVal).toLocaleString('ko-KR') : '') : inputVal}" data-mkey="${inputKey}" inputmode="decimal" placeholder="${isQty ? '0' : '0'}" autocomplete="off" ${disabledAttr}>
           <span class="calc-cell">${amt > 0 ? fmtKRW(amt) : '—'}</span>
           <span class="calc-cell ${dropClass}">${dropStr}</span>
           <span class="calc-cell">${cumAvg > 0 ? fmtPrice(cumAvg) : '—'}</span>
@@ -3096,11 +3129,18 @@ function refreshPlanInputs() {
       row.querySelectorAll('input[data-mkey]').forEach(input => {
         input.addEventListener('input', e => {
           const key = e.target.dataset.mkey;
-          p.manualRows[idx][key] = +e.target.value || 0;
+          // comma-input 클래스면 콤마 파싱, 아니면 일반
+          const useComma = e.target.classList.contains('comma-input');
+          p.manualRows[idx][key] = (useComma ? (parseCommaNum(e.target.value) || 0) : (+e.target.value || 0));
           saveState();
           // 포커스 손실 방지: innerHTML 재생성 없이 계산 셀만 갱신
           updateManualRowAmounts(p);
         });
+        // comma-input은 focus/blur로 콤마 자동 처리
+        if (input.classList.contains('comma-input')) {
+          input.addEventListener('focus', () => stripCommaForEdit(input));
+          input.addEventListener('blur', () => applyCommaFormat(input));
+        }
       });
       // 체크박스 (committed 토글)
       const cb = row.querySelector('.manual-check');
