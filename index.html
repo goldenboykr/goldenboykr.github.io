@@ -209,12 +209,6 @@ input:focus, select:focus {
 }
 input::placeholder { color: var(--text-mute); }
 
-/* 피보나치 + 수동 지지선 카드의 입력칸은 가운데 정렬 */
-#fib-high, #fib-low, #fib-now, #fib-lev-mult, #fib-lev-now,
-#mc-base-now, #mc-lev-mult, #mc-lev-now {
-  text-align: center;
-}
-
 #memo-text {
   width: 100%;
   padding: 14px 16px;
@@ -1464,7 +1458,6 @@ input:disabled, select:disabled {
 }
 .mc-cell {
   display: block;
-  text-align: center;
 }
 .mc-cell.mc-tier {
   color: var(--text-dim);
@@ -1480,7 +1473,7 @@ input:disabled, select:disabled {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  text-align: center;
+  text-align: right;
 }
 .mc-cell.mc-input-cell input:focus {
   outline: none;
@@ -1489,7 +1482,7 @@ input:disabled, select:disabled {
 .mc-cell.mc-base-pct,
 .mc-cell.mc-lev-price,
 .mc-cell.mc-lev-pct {
-  text-align: center;
+  text-align: right;
   font-weight: 600;
   color: var(--text-dim);
 }
@@ -1958,36 +1951,36 @@ input:disabled, select:disabled {
 
       <!-- 변환 기준 입력 -->
       <!-- 피보 카드의 값 자동 참조 (읽기 전용 표시) -->
-      <div id="mc-source-info" style="background:rgba(73,187,202,0.06);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.6;">
-        <div style="color:var(--text-mute);font-size:11px;letter-spacing:0.3px;margin-bottom:4px;">피보 카드 값 (비워두면 자동 사용)</div>
+      <div id="mc-source-info" style="background:rgba(73,187,202,0.06);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.6;">
+        <div style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;margin-bottom:2px;">피보 카드 값 (비워두면 자동 사용)</div>
         <div id="mc-source-display">위 피보의 <b>현재가</b>, <b>레버 배수</b>, <b>레버 현재가</b>를 기본값으로 사용합니다.</div>
       </div>
 
       <!-- 입력칸 (선택, 비우면 피보 값) -->
       <div class="form-row" style="margin-bottom:8px;">
         <div class="form-group">
-          <label class="form-label">본주가</label>
-          <input type="text" id="mc-base-now" placeholder="" inputmode="decimal" autocomplete="off">
+          <label class="form-label">본주 현재가 <span class="unit">(선택)</span></label>
+          <input type="text" id="mc-base-now" placeholder="피보 값 사용" inputmode="decimal" autocomplete="off">
         </div>
         <div class="form-group">
-          <label class="form-label">배수</label>
-          <input type="text" id="mc-lev-mult" placeholder="" inputmode="decimal" autocomplete="off">
+          <label class="form-label">레버 배수 <span class="unit">(선택)</span></label>
+          <input type="text" id="mc-lev-mult" placeholder="피보 값 사용" inputmode="decimal" autocomplete="off">
         </div>
         <div class="form-group">
-          <label class="form-label">레버가</label>
-          <input type="text" id="mc-lev-now" placeholder="" inputmode="decimal" autocomplete="off">
+          <label class="form-label">레버 현재가 <span class="unit">(선택)</span></label>
+          <input type="text" id="mc-lev-now" placeholder="피보 값 사용" inputmode="decimal" autocomplete="off">
         </div>
       </div>
 
       <!-- 본주 가격 입력 (6개 슬롯) - 입력 즉시 옆 칸에 결과 표시 -->
-      <div style="font-size:13px;color:var(--text-dim);margin:14px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;font-weight:600;">본주 가격 입력 (입력하면 즉시 옆 칸에 계산)</div>
+      <div style="font-size:11px;color:var(--text-mute);margin:14px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;">본주 가격 입력 (입력하면 즉시 옆 칸에 계산)</div>
       <div id="mc-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <div class="mc-row mc-row-header">
-          <span class="mc-cell mc-tier" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;font-weight:700;">차수</span>
-          <span class="mc-cell mc-input-cell" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;font-weight:700;">본주 가격</span>
-          <span class="mc-cell mc-base-pct" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;font-weight:700;">변동률</span>
-          <span class="mc-cell mc-lev-price" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;font-weight:700;" id="mc-lev-header">레버 가격</span>
-          <span class="mc-cell mc-lev-pct" style="color:var(--text-mute);font-size:12px;letter-spacing:0.3px;font-weight:700;">레버 변동률</span>
+          <span class="mc-cell mc-tier" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">차수</span>
+          <span class="mc-cell mc-input-cell" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">본주 가격</span>
+          <span class="mc-cell mc-base-pct" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">변동률</span>
+          <span class="mc-cell mc-lev-price" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;" id="mc-lev-header">레버 가격</span>
+          <span class="mc-cell mc-lev-pct" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">레버 변동률</span>
         </div>
         <div id="mc-rows">
           <!-- JS로 채워짐 -->
@@ -4779,7 +4772,7 @@ function buildMcRows() {
       <div class="mc-row" data-row="${i}">
         <span class="mc-cell mc-tier">${i + 1}차</span>
         <span class="mc-cell mc-input-cell">
-          <input type="text" class="mc-price" data-idx="${i}" placeholder="" inputmode="decimal" autocomplete="off">
+          <input type="text" class="mc-price" data-idx="${i}" placeholder="본주 가격" inputmode="decimal" autocomplete="off">
         </span>
         <span class="mc-cell mc-base-pct" data-idx="${i}">—</span>
         <span class="mc-cell mc-lev-price" data-idx="${i}">—</span>
