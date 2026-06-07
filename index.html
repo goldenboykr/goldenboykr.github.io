@@ -1399,6 +1399,62 @@ input:disabled, select:disabled {
   min-width: 580px;  /* 레버 ON일 때 5열 → 더 넓은 최소 너비 */
 }
 
+/* 수동 지지선 행 — 인라인 입력 + 결과 (5칸) */
+.mc-row {
+  display: grid;
+  grid-template-columns: 45px 110px 75px 100px 75px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  min-width: 405px;  /* 좁은 화면이면 가로 스크롤 */
+  border-radius: 4px;
+}
+.mc-row + .mc-row { margin-top: 2px; }
+.mc-row-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+.mc-cell {
+  display: block;
+}
+.mc-cell.mc-tier {
+  color: var(--text-dim);
+  font-weight: 700;
+  text-align: center;
+}
+.mc-cell.mc-input-cell input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: right;
+}
+.mc-cell.mc-input-cell input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.mc-cell.mc-base-pct,
+.mc-cell.mc-lev-price,
+.mc-cell.mc-lev-pct {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.mc-cell.mc-pos { color: var(--text-mute); }
+.mc-cell.mc-neg { color: var(--sell); }
+
+#mc-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .fib-row {
   display: grid;
   grid-template-columns: 50px 1fr 95px 80px;  /* 레벨 / 본주가격 / 전고대비 / 등락률 */
@@ -1804,15 +1860,15 @@ input:disabled, select:disabled {
       <div class="form-row" style="margin-bottom:8px;">
         <div class="form-group">
           <label class="form-label">전고점 <span class="unit">(High)</span></label>
-          <input type="number" id="fib-high" placeholder="0" inputmode="decimal" step="any">
+          <input type="text" id="fib-high" placeholder="0" inputmode="decimal" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">전저점 <span class="unit">(Low)</span></label>
-          <input type="number" id="fib-low" placeholder="0" inputmode="decimal" step="any">
+          <input type="text" id="fib-low" placeholder="0" inputmode="decimal" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">현재가 <span class="unit">(Now)</span></label>
-          <input type="number" id="fib-now" placeholder="0" inputmode="decimal" step="any">
+          <input type="text" id="fib-now" placeholder="0" inputmode="decimal" autocomplete="off">
         </div>
       </div>
 
@@ -1820,11 +1876,11 @@ input:disabled, select:disabled {
       <div class="form-row" style="margin-bottom:8px;">
         <div class="form-group">
           <label class="form-label">레버 배수 <span class="unit">(예: 3, -3)</span></label>
-          <input type="number" id="fib-lev-mult" placeholder="비워두면 본주만" inputmode="decimal" step="any">
+          <input type="text" id="fib-lev-mult" placeholder="비워두면 본주만" inputmode="decimal" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">레버 현재가 <span class="unit">(원/USD)</span></label>
-          <input type="number" id="fib-lev-now" placeholder="0" inputmode="decimal" step="any">
+          <input type="text" id="fib-lev-now" placeholder="0" inputmode="decimal" autocomplete="off">
         </div>
       </div>
 
@@ -1839,6 +1895,65 @@ input:disabled, select:disabled {
 
       <!-- 결과 영역 -->
       <div id="fib-result" style="display:none;"></div>
+    </div>
+
+    <!-- ============================
+         수동 지지선 카드 (직접 그린 본주 피보 채널 → 레버 가격 변환)
+         ============================ -->
+    <div class="card" id="manual-channel-card">
+      <div class="card-title">
+        <span class="card-title-bar">수동 지지선 (본주 → 레버 변환)</span>
+        <span id="manual-channel-saved" style="font-size:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-left:auto;display:none;">✓ 저장됨</span>
+      </div>
+      <div class="helper-text" style="margin-bottom:10px;">
+        💡 본주 차트에 <b>직접 그린 피보 채널</b>(또는 임의의 지지/저항선)의 가격대를 입력하면, 대응하는 <b>레버 추정가</b>가 계산됩니다.
+        <br>💡 본주 현재가 + 레버 배수 + 레버 현재가만 입력하면 됨. 종목별 자동 저장.
+      </div>
+
+      <!-- 변환 기준 입력 -->
+      <!-- 피보 카드의 값 자동 참조 (읽기 전용 표시) -->
+      <div id="mc-source-info" style="background:rgba(73,187,202,0.06);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.6;">
+        <div style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;margin-bottom:2px;">피보 카드 값 (비워두면 자동 사용)</div>
+        <div id="mc-source-display">위 피보의 <b>현재가</b>, <b>레버 배수</b>, <b>레버 현재가</b>를 기본값으로 사용합니다.</div>
+      </div>
+
+      <!-- 입력칸 (선택, 비우면 피보 값) -->
+      <div class="form-row" style="margin-bottom:8px;">
+        <div class="form-group">
+          <label class="form-label">본주 현재가 <span class="unit">(선택)</span></label>
+          <input type="text" id="mc-base-now" placeholder="피보 값 사용" inputmode="decimal" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">레버 배수 <span class="unit">(선택)</span></label>
+          <input type="text" id="mc-lev-mult" placeholder="피보 값 사용" inputmode="decimal" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">레버 현재가 <span class="unit">(선택)</span></label>
+          <input type="text" id="mc-lev-now" placeholder="피보 값 사용" inputmode="decimal" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- 본주 가격 입력 (6개 슬롯) - 입력 즉시 옆 칸에 결과 표시 -->
+      <div style="font-size:11px;color:var(--text-mute);margin:14px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;">본주 가격 입력 (입력하면 즉시 옆 칸에 계산)</div>
+      <div id="mc-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <div class="mc-row mc-row-header">
+          <span class="mc-cell mc-tier" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">차수</span>
+          <span class="mc-cell mc-input-cell" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">본주 가격</span>
+          <span class="mc-cell mc-base-pct" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">변동률</span>
+          <span class="mc-cell mc-lev-price" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;" id="mc-lev-header">레버 가격</span>
+          <span class="mc-cell mc-lev-pct" style="color:var(--text-mute);font-size:10px;letter-spacing:0.3px;">레버 변동률</span>
+        </div>
+        <div id="mc-rows">
+          <!-- JS로 채워짐 -->
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-top:10px;margin-bottom:10px;">
+        <button class="chart-btn" id="btn-mc-clear" style="flex:1;">초기화</button>
+      </div>
+
+      <!-- 결과 영역 -->
+      <div id="mc-result" style="display:none;"></div>
     </div>
   </div>
 
@@ -2323,7 +2438,10 @@ function activateTab(tabName) {
       if (typeof loadSentiment === 'function') loadSentiment();
       if (typeof initIndexWidgets === 'function') initIndexWidgets();
     }
-    if (tabName === 'plan' && typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+    if (tabName === 'plan') {
+      if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+      if (typeof loadManualChannelForCurrentSymbol === 'function') loadManualChannelForCurrentSymbol();
+    }
     if (tabName === 'watchlist' && typeof renderWatchlistChips === 'function') renderWatchlistChips();
   }
 }
@@ -2548,7 +2666,7 @@ function renderSubtabs() {
       renderSubtabs();
       renderPlanForm();
       restoreOrHidePlanResult();
-      if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+      if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol(); if (typeof loadManualChannelForCurrentSymbol === 'function') loadManualChannelForCurrentSymbol();
     });
   });
   document.getElementById('btn-add-plan').addEventListener('click', addNewPlan);
@@ -2563,7 +2681,7 @@ function addNewPlan() {
   renderPlanForm();
   renderPortfolioStatus();
   hidePlanResult();
-  if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+  if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol(); if (typeof loadManualChannelForCurrentSymbol === 'function') loadManualChannelForCurrentSymbol();
   // 종목명 입력에 포커스
   setTimeout(() => document.getElementById('plan-symbol').focus(), 50);
 }
@@ -2657,7 +2775,7 @@ bindPlanInput(planDistEl, 'dist');
 
 // 종목명 변경 시 피보나치도 그 종목의 저장값으로 다시 로드
 planSymbolEl.addEventListener('change', () => {
-  if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+  if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol(); if (typeof loadManualChannelForCurrentSymbol === 'function') loadManualChannelForCurrentSymbol();
 });
 
 // 수동 모드 토글 (수량 / 비중)
@@ -3307,7 +3425,7 @@ document.getElementById('btn-del-stock').addEventListener('click', () => {
     renderPlanForm();
     renderPortfolioStatus();
     restoreOrHidePlanResult();
-    if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+    if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol(); if (typeof loadManualChannelForCurrentSymbol === 'function') loadManualChannelForCurrentSymbol();
     showToast('삭제됨');
   });
 });
@@ -3396,7 +3514,7 @@ restoreOrHidePlanResult();
 // 페이지 로드 후 활성 종목의 피보나치 저장값을 자동 복원
 // + 마지막 활성 탭 복원 (앱 닫았다가 다시 열면 보던 탭 그대로)
 setTimeout(() => {
-  if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol();
+  if (typeof loadFibForCurrentSymbol === 'function') loadFibForCurrentSymbol(); if (typeof loadManualChannelForCurrentSymbol === 'function') loadManualChannelForCurrentSymbol();
   try {
     const last = localStorage.getItem(TAB_STORAGE_KEY);
     if (last && document.querySelector(`.tab[data-tab="${last}"]`)) {
@@ -3712,6 +3830,52 @@ function fmt(n) {
   const num = +n;
   if (num >= 1000 || Number.isInteger(num)) return num.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
   return num.toLocaleString('ko-KR', { maximumFractionDigits: 4 });
+}
+
+// 정수 포맷 (피보/수동지지선 전용 - 소수점 없이 반올림, 천 단위 콤마)
+function fmtInt(n) {
+  if (n == null || isNaN(n)) return '0';
+  return Math.round(+n).toLocaleString('ko-KR');
+}
+
+// 통화 포함 정수 포맷 (피보/수동지지선 전용)
+function fmtPriceIntWithCurrency(n, symbol) {
+  if (n == null || isNaN(n)) return '—';
+  const c = guessCurrency(symbol);
+  const formatted = fmtInt(n);
+  if (c.code === 'KRW') return formatted + '원';
+  return c.symbol + formatted;
+}
+
+// 콤마/공백/통화기호 포함된 텍스트 input 값을 숫자로 파싱 (피보/수동지지선 input 전용)
+function parseCommaNum(text) {
+  if (text == null) return NaN;
+  const s = String(text).trim().replace(/[,\s]/g, '');
+  if (s === '' || s === '-' || s === '.') return NaN;
+  return parseFloat(s);
+}
+
+// input의 현재 값을 콤마 포맷으로 표시 (포커스 잃을 때 호출)
+function applyCommaFormat(el) {
+  if (!el || !el.value) return;
+  const n = parseCommaNum(el.value);
+  if (isNaN(n)) return;
+  // 정수면 콤마만, 소수점 있으면 그대로 + 콤마
+  const isInt = Number.isInteger(n);
+  if (isInt) {
+    el.value = n.toLocaleString('ko-KR');
+  } else {
+    // 소수점 있는 값(배수 -3.5 등)은 부동소수점 그대로
+    const parts = String(n).split('.');
+    parts[0] = (+parts[0]).toLocaleString('ko-KR');
+    el.value = parts.join('.');
+  }
+}
+
+// 입력 시작할 때 콤마 제거 (편집 편의)
+function stripCommaForEdit(el) {
+  if (!el || !el.value) return;
+  el.value = el.value.replace(/,/g, '');
 }
 
 // 종목 심볼에서 통화 추정. 기본 KRW, 명확히 미국 주식/암호화폐일 때만 USD
@@ -4145,6 +4309,8 @@ function loadFibForCurrentSymbol() {
     nowEl.value = saved.now ?? '';
     if (levMultEl) levMultEl.value = saved.levMult ?? '';
     if (levNowEl) levNowEl.value = saved.levNow ?? '';
+    // 콤마 포맷 적용
+    [highEl, lowEl, nowEl, levMultEl, levNowEl].forEach(el => el && applyCommaFormat(el));
     indicator.style.display = 'inline';
     if (saved.high > 0 && saved.low > 0 && saved.now > 0) {
       renderFibResult();
@@ -4161,6 +4327,7 @@ function loadFibForCurrentSymbol() {
     nowEl.value = autoNow;
     if (levMultEl) levMultEl.value = '';
     if (levNowEl) levNowEl.value = '';
+    applyCommaFormat(nowEl);  // 자동 채워진 현재가에 콤마
     indicator.style.display = 'none';
     resultEl.style.display = 'none';
   }
@@ -4171,11 +4338,11 @@ function saveCurrentFib() {
   const key = fibKey();
   if (key === '__none__') return; // 활성 종목 없으면 저장 안 함
 
-  const high = parseFloat(document.getElementById('fib-high').value);
-  const low = parseFloat(document.getElementById('fib-low').value);
-  const now = parseFloat(document.getElementById('fib-now').value);
-  const levMult = parseFloat(document.getElementById('fib-lev-mult').value);
-  const levNow = parseFloat(document.getElementById('fib-lev-now').value);
+  const high = parseCommaNum(document.getElementById('fib-high').value);
+  const low = parseCommaNum(document.getElementById('fib-low').value);
+  const now = parseCommaNum(document.getElementById('fib-now').value);
+  const levMult = parseCommaNum(document.getElementById('fib-lev-mult').value);
+  const levNow = parseCommaNum(document.getElementById('fib-lev-now').value);
 
   if (isNaN(high) || isNaN(low) || isNaN(now) || high <= 0 || low <= 0 || now <= 0) return;
 
@@ -4262,9 +4429,9 @@ function classifyFibZone(positionPct) {
 
 // 결과 렌더링
 function renderFibResult() {
-  const high = parseFloat(document.getElementById('fib-high').value);
-  const low = parseFloat(document.getElementById('fib-low').value);
-  const now = parseFloat(document.getElementById('fib-now').value);
+  const high = parseCommaNum(document.getElementById('fib-high').value);
+  const low = parseCommaNum(document.getElementById('fib-low').value);
+  const now = parseCommaNum(document.getElementById('fib-now').value);
 
   const resultEl = document.getElementById('fib-result');
 
@@ -4292,8 +4459,8 @@ function renderFibResult() {
   const sym = activePlan ? activePlan.symbol : '';
 
   // 레버리지 입력 읽기 (선택 사항)
-  const levMult = parseFloat(document.getElementById('fib-lev-mult')?.value);
-  const levNow = parseFloat(document.getElementById('fib-lev-now')?.value);
+  const levMult = parseCommaNum(document.getElementById('fib-lev-mult')?.value);
+  const levNow = parseCommaNum(document.getElementById('fib-lev-now')?.value);
   const hasLev = !isNaN(levMult) && !isNaN(levNow) && levMult !== 0 && levNow > 0;
 
   // 현재가 위치 카드
@@ -4305,7 +4472,7 @@ function renderFibResult() {
       </div>
       <div style="text-align:right;">
         <div class="pos-value fg-color-${zone.color}">${positionPct.toFixed(1)}%</div>
-        <div class="pos-zone">${fmtPriceWithCurrency(now, sym)}</div>
+        <div class="pos-zone">${fmtPriceIntWithCurrency(now, sym)}</div>
       </div>
     </div>
   `;
@@ -4360,8 +4527,8 @@ function renderFibResult() {
       const levPriceRatio = Math.max(0, 1 + levChangePct / 100);
       const levPrice = levNow * levPriceRatio;
       const levColor = isNearest ? 'var(--buy)' : 'var(--text-dim)';
-      levCellHtml = `<span class="lev-price" style="color:${levColor};">${fmtPriceWithCurrency(levPrice, '')}</span>`;
-      // 등락률 컬럼: 본주 % / 레버 %
+      levCellHtml = `<span class="lev-price" style="color:${levColor};">${fmtPriceIntWithCurrency(levPrice, '')}</span>`;
+      // 등락률 컬럼: 본주 % / 레버 % (소수점 2자리)
       const baseSign = dist >= 0 ? '+' : '';
       const levSign = levChangePct >= 0 ? '+' : '';
       distHtml = `<span class="distance" style="${isNearest ? 'color:var(--buy);font-weight:700;' : ''}">${baseSign}${dist.toFixed(2)}% / ${levSign}${levChangePct.toFixed(2)}%</span>`;
@@ -4370,7 +4537,6 @@ function renderFibResult() {
     }
 
     // 전고점 대비 (피보 가격이 전고점에서 얼마나 떨어졌는지)
-    // = (l.price - high) / high * 100  (음수 = 하락, 양수 = 음수레벨의 경우 고점 상회)
     const fromHigh = ((l.price - high) / high * 100);
     const fromHighSign = fromHigh >= 0 ? '+' : '';
     const fromHighColor = fromHigh >= 0 ? 'var(--text-mute)' : 'var(--sell)';
@@ -4379,7 +4545,7 @@ function renderFibResult() {
     return `
       <div class="${cls}" style="opacity:${opacity};">
         <span class="level" style="color:${isNearest ? 'var(--buy)' : kindColor};">${l.label}${kindBadge}${minorTag}</span>
-        <span class="price">${fmtPriceWithCurrency(l.price, sym)}</span>
+        <span class="price">${fmtPriceIntWithCurrency(l.price, sym)}</span>
         ${fromHighHtml}
         ${levCellHtml}
         ${distHtml}
@@ -4427,15 +4593,337 @@ document.getElementById('btn-fib-clear').addEventListener('click', () => {
   document.getElementById('fib-saved-indicator').style.display = 'none';
 });
 
-// Enter 키로 즉시 계산 + 입력 변경 시 저장 표시 제거
-['fib-high', 'fib-low', 'fib-now'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); renderFibResult(); }
+// Enter 키로 즉시 계산 + 입력 변경 시 저장 표시 제거 + 콤마 자동 처리
+['fib-high', 'fib-low', 'fib-now', 'fib-lev-mult', 'fib-lev-now'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); renderFibResult(); }
   });
-  document.getElementById(id).addEventListener('input', () => {
-    document.getElementById('fib-saved-indicator').style.display = 'none';
+  el.addEventListener('input', () => {
+    const saved = document.getElementById('fib-saved-indicator');
+    if (saved) saved.style.display = 'none';
+  });
+  // 포커스 시 편집 편하게 콤마 제거
+  el.addEventListener('focus', () => stripCommaForEdit(el));
+  // 포커스 잃을 때 콤마 추가
+  el.addEventListener('blur', () => applyCommaFormat(el));
+});
+
+
+/* =====================================================
+ *  수동 지지선 카드 (본주 → 레버 변환)
+ *  - 본주 차트에서 직접 그린 지지/저항선 가격을 입력 → 레버 가격 계산
+ *  - 종목별 localStorage 저장 ('manual_channel_v1')
+ * ===================================================== */
+
+const MC_STORAGE_KEY = 'manual_channel_v1';
+const MC_SLOT_COUNT = 6;  // 입력 슬롯 개수
+
+function mcKey() {
+  const plan = getActivePlan();
+  if (plan && plan.symbol) return plan.symbol.toUpperCase();
+  return '__none__';
+}
+
+function loadMcStore() {
+  try {
+    const raw = localStorage.getItem(MC_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function saveMcStore(store) {
+  try { localStorage.setItem(MC_STORAGE_KEY, JSON.stringify(store)); }
+  catch (e) { console.warn('manual channel 저장 실패:', e); }
+}
+
+// 입력 행 6개 동적 생성 (라벨 + 가격)
+function buildMcRows() {
+  const wrap = document.getElementById('mc-rows');
+  if (!wrap) return;
+  let html = '';
+  for (let i = 0; i < MC_SLOT_COUNT; i++) {
+    html += `
+      <div class="mc-row" data-row="${i}">
+        <span class="mc-cell mc-tier">${i + 1}차</span>
+        <span class="mc-cell mc-input-cell">
+          <input type="text" class="mc-price" data-idx="${i}" placeholder="본주 가격" inputmode="decimal" autocomplete="off">
+        </span>
+        <span class="mc-cell mc-base-pct" data-idx="${i}">—</span>
+        <span class="mc-cell mc-lev-price" data-idx="${i}">—</span>
+        <span class="mc-cell mc-lev-pct" data-idx="${i}">—</span>
+      </div>
+    `;
+  }
+  wrap.innerHTML = html;
+}
+
+// 활성 종목의 수동 지지선 데이터 로드
+function loadManualChannelForCurrentSymbol() {
+  const key = mcKey();
+  const store = loadMcStore();
+  const saved = store[key];
+
+  const indicator = document.getElementById('manual-channel-saved');
+  const resultEl = document.getElementById('mc-result');
+  if (!indicator || !resultEl) return;
+
+  // 입력 행이 아직 안 그려졌으면 생성
+  if (document.querySelectorAll('.mc-price').length === 0) buildMcRows();
+
+  // 피보 카드 값 표시 갱신
+  updateMcSourceDisplay();
+
+  // mc-* 입력칸 (선택적 override)
+  const mcBaseEl = document.getElementById('mc-base-now');
+  const mcMultEl = document.getElementById('mc-lev-mult');
+  const mcLevEl = document.getElementById('mc-lev-now');
+
+  if (saved) {
+    if (mcBaseEl) mcBaseEl.value = saved.baseNow ?? '';
+    if (mcMultEl) mcMultEl.value = saved.levMult ?? '';
+    if (mcLevEl) mcLevEl.value = saved.levNow ?? '';
+    const rows = saved.rows || [];
+    document.querySelectorAll('.mc-price').forEach((el, i) => {
+      el.value = rows[i]?.price ?? '';
+    });
+    // 콤마 포맷 적용
+    [mcBaseEl, mcMultEl, mcLevEl].forEach(el => el && applyCommaFormat(el));
+    document.querySelectorAll('.mc-price').forEach(el => applyCommaFormat(el));
+    indicator.style.display = 'inline';
+    // 값이 있으면 자동 렌더
+    const hasAnyPrice = rows.some(r => r && parseCommaNum(r.price) > 0);
+    if (hasAnyPrice) {
+      renderManualChannelResult();
+    } else {
+      resultEl.style.display = 'none';
+    }
+  } else {
+    if (mcBaseEl) mcBaseEl.value = '';
+    if (mcMultEl) mcMultEl.value = '';
+    if (mcLevEl) mcLevEl.value = '';
+    document.querySelectorAll('.mc-price').forEach(el => el.value = '');
+    indicator.style.display = 'none';
+    resultEl.style.display = 'none';
+  }
+}
+
+// 피보 카드의 현재 값을 가져와서 표시
+function updateMcSourceDisplay() {
+  const baseNow = parseCommaNum(document.getElementById('fib-now')?.value);
+  const levMult = parseCommaNum(document.getElementById('fib-lev-mult')?.value);
+  const levNow = parseCommaNum(document.getElementById('fib-lev-now')?.value);
+  const display = document.getElementById('mc-source-display');
+  if (!display) return;
+
+  const baseStr = (!isNaN(baseNow) && baseNow > 0)
+    ? `<b style="color:var(--accent);">${baseNow.toLocaleString()}</b>`
+    : `<span style="color:var(--sell);">미입력</span>`;
+  const multStr = (!isNaN(levMult) && levMult !== 0)
+    ? `<b style="color:var(--accent);">×${levMult}</b>`
+    : `<span style="color:var(--text-mute);">미입력</span>`;
+  const levStr = (!isNaN(levNow) && levNow > 0)
+    ? `<b style="color:var(--accent);">${levNow.toLocaleString()}</b>`
+    : `<span style="color:var(--text-mute);">미입력</span>`;
+
+  display.innerHTML = `본주 현재가 ${baseStr} · 레버 배수 ${multStr} · 레버 현재가 ${levStr}`;
+}
+
+function saveCurrentManualChannel() {
+  const key = mcKey();
+  if (key === '__none__') return;
+
+  const rows = [];
+  document.querySelectorAll('.mc-price').forEach((el) => {
+    rows.push({ price: el.value.trim() });
+  });
+
+  const mcBase = document.getElementById('mc-base-now')?.value.trim();
+  const mcMult = document.getElementById('mc-lev-mult')?.value.trim();
+  const mcLev = document.getElementById('mc-lev-now')?.value.trim();
+
+  const store = loadMcStore();
+  store[key] = {
+    baseNow: mcBase || '',
+    levMult: mcMult || '',
+    levNow: mcLev || '',
+    rows,
+    savedAt: new Date().toISOString(),
+  };
+  saveMcStore(store);
+  document.getElementById('manual-channel-saved').style.display = 'inline';
+}
+
+// 입력칸이 비어있으면 피보 값을 fallback으로 사용
+function getMcBaseNow() {
+  const local = parseCommaNum(document.getElementById('mc-base-now')?.value);
+  if (!isNaN(local) && local > 0) return local;
+  const fib = parseCommaNum(document.getElementById('fib-now')?.value);
+  return isNaN(fib) ? NaN : fib;
+}
+function getMcLevMult() {
+  const local = parseCommaNum(document.getElementById('mc-lev-mult')?.value);
+  if (!isNaN(local) && local !== 0) return local;
+  const fib = parseCommaNum(document.getElementById('fib-lev-mult')?.value);
+  return isNaN(fib) ? NaN : fib;
+}
+function getMcLevNow() {
+  const local = parseCommaNum(document.getElementById('mc-lev-now')?.value);
+  if (!isNaN(local) && local > 0) return local;
+  const fib = parseCommaNum(document.getElementById('fib-lev-now')?.value);
+  return isNaN(fib) ? NaN : fib;
+}
+
+// 결과 렌더 - 각 행의 인라인 셀에 값을 채움 (별도 표 없음)
+function renderManualChannelResult() {
+  // 입력칸 우선, 비어있으면 피보 값 사용
+  const baseNow = getMcBaseNow();
+  const levMult = getMcLevMult();
+  const levNow = getMcLevNow();
+  const resultEl = document.getElementById('mc-result');
+
+  // 레버 입력 유무
+  const hasLev = !isNaN(levMult) && !isNaN(levNow) && levMult !== 0 && levNow > 0;
+
+  // 헤더의 "레버 가격" 라벨에 배수 반영
+  const levHeader = document.getElementById('mc-lev-header');
+  if (levHeader) levHeader.textContent = hasLev ? `레버 ×${levMult}` : '레버 가격';
+
+  // 각 슬롯의 셀에 값 채우기
+  let validCount = 0;
+  document.querySelectorAll('.mc-price').forEach((priceEl, i) => {
+    const price = parseCommaNum(priceEl.value);
+    const basePctEl = document.querySelector(`.mc-base-pct[data-idx="${i}"]`);
+    const levPriceEl = document.querySelector(`.mc-lev-price[data-idx="${i}"]`);
+    const levPctEl = document.querySelector(`.mc-lev-pct[data-idx="${i}"]`);
+    if (!basePctEl || !levPriceEl || !levPctEl) return;
+
+    // 빈 칸이거나 본주 현재가 없으면 셀 비움
+    if (isNaN(price) || price <= 0 || isNaN(baseNow) || baseNow <= 0) {
+      basePctEl.textContent = '—';
+      levPriceEl.textContent = '—';
+      levPctEl.textContent = '—';
+      basePctEl.classList.remove('mc-pos', 'mc-neg');
+      levPriceEl.classList.remove('mc-pos', 'mc-neg');
+      levPctEl.classList.remove('mc-pos', 'mc-neg');
+      return;
+    }
+
+    validCount++;
+    const baseChangePct = (price - baseNow) / baseNow * 100;
+    const baseSign = baseChangePct >= 0 ? '+' : '';
+    basePctEl.textContent = `${baseSign}${baseChangePct.toFixed(2)}%`;
+    basePctEl.classList.remove('mc-pos', 'mc-neg');
+    if (Math.abs(baseChangePct) >= 0.05) {
+      basePctEl.classList.add(baseChangePct >= 0 ? 'mc-pos' : 'mc-neg');
+    }
+
+    if (hasLev) {
+      const levChangePct = baseChangePct * levMult;
+      const levPriceRatio = Math.max(0, 1 + levChangePct / 100);
+      const levPrice = levNow * levPriceRatio;
+      const levSign = levChangePct >= 0 ? '+' : '';
+      levPriceEl.textContent = fmtPriceIntWithCurrency(levPrice, '').trim();
+      levPctEl.textContent = `${levSign}${levChangePct.toFixed(2)}%`;
+      levPctEl.classList.remove('mc-pos', 'mc-neg');
+      if (Math.abs(levChangePct) >= 0.05) {
+        levPctEl.classList.add(levChangePct >= 0 ? 'mc-pos' : 'mc-neg');
+      }
+      levPriceEl.classList.remove('mc-pos', 'mc-neg');
+    } else {
+      levPriceEl.textContent = '—';
+      levPctEl.textContent = '—';
+      levPriceEl.classList.remove('mc-pos', 'mc-neg');
+      levPctEl.classList.remove('mc-pos', 'mc-neg');
+    }
+  });
+
+  // 경고 메시지 처리
+  if (isNaN(baseNow) || baseNow <= 0) {
+    resultEl.innerHTML = `<div class="helper-text" style="color:var(--sell);">⚠️ 본주 현재가를 입력하거나 위 피보 카드에 현재가를 입력하세요.</div>`;
+    resultEl.style.display = 'block';
+  } else if (validCount === 0) {
+    resultEl.style.display = 'none';
+  } else if (hasLev) {
+    resultEl.innerHTML = `<div class="helper-text" style="font-size:10px;color:var(--text-mute);">⚠ 레버 추정가는 일일 변동률 × 배수(${levMult}) 단순 계산. 실제 ETF는 변동성 손실로 더 떨어지는 경향. 참고용.</div>`;
+    resultEl.style.display = 'block';
+  } else {
+    resultEl.style.display = 'none';
+  }
+
+  // 자동 저장
+  saveCurrentManualChannel();
+}
+
+// 이벤트 핸들러
+document.getElementById('btn-mc-clear').addEventListener('click', () => {
+  if (!confirm('이 종목의 수동 지지선 데이터를 초기화하시겠습니까?')) return;
+  const key = mcKey();
+  const store = loadMcStore();
+  delete store[key];
+  saveMcStore(store);
+  document.getElementById('mc-base-now').value = '';
+  document.getElementById('mc-lev-mult').value = '';
+  document.getElementById('mc-lev-now').value = '';
+  document.querySelectorAll('.mc-price').forEach(el => el.value = '');
+  document.getElementById('mc-result').style.display = 'none';
+  document.getElementById('manual-channel-saved').style.display = 'none';
+});
+
+// 피보 카드 입력 변경 시 → 수동 지지선 표시 갱신 + 결과 있으면 재계산
+['fib-now', 'fib-lev-mult', 'fib-lev-now'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    updateMcSourceDisplay();
+    autoRenderManualChannel();
   });
 });
+
+// mc-* 입력칸(override) 변경 시 → 즉시 재계산 + 콤마 처리
+['mc-base-now', 'mc-lev-mult', 'mc-lev-now'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    document.getElementById('manual-channel-saved').style.display = 'none';
+    autoRenderManualChannel();
+  });
+  el.addEventListener('focus', () => stripCommaForEdit(el));
+  el.addEventListener('blur', () => applyCommaFormat(el));
+});
+
+// 본주 가격 입력 시 → 즉시 재계산 + 저장 표시 제거 + 콤마 처리
+buildMcRows();
+document.getElementById('mc-rows').addEventListener('input', () => {
+  document.getElementById('manual-channel-saved').style.display = 'none';
+  autoRenderManualChannel();
+});
+// .mc-price 포커스 시 콤마 제거, 잃을 때 콤마 추가 (이벤트 위임)
+document.getElementById('mc-rows').addEventListener('focusin', e => {
+  if (e.target.classList && e.target.classList.contains('mc-price')) {
+    stripCommaForEdit(e.target);
+  }
+});
+document.getElementById('mc-rows').addEventListener('focusout', e => {
+  if (e.target.classList && e.target.classList.contains('mc-price')) {
+    applyCommaFormat(e.target);
+  }
+});
+
+// 자동 렌더 헬퍼 - 본주 가격이 하나라도 있으면 계산
+function autoRenderManualChannel() {
+  const hasAnyPrice = Array.from(document.querySelectorAll('.mc-price'))
+    .some(el => {
+      const v = parseCommaNum(el.value);
+      return !isNaN(v) && v > 0;
+    });
+  if (hasAnyPrice) {
+    renderManualChannelResult();
+  } else {
+    document.getElementById('mc-result').style.display = 'none';
+  }
+}
 
 
 /* =====================================================
